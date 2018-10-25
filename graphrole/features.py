@@ -62,15 +62,54 @@ def group_features(binned_features: np.ndarray, dist_thresh: int = 0) -> Iterato
     n_features = binned_features.shape[1]
 
     # condensed vector of pairwise distances measuring
-    # max_i |u[i] - v[i]| for feature vectors u, v
-    dists = pdist(binned_features, metric='chebychev')
+    # max_i |u[i] - v[i]| for features u, v
+    dists = pdist(binned_features.T, metric='chebychev')
 
-    # construct feature graph by connecting all features with distance
-    # at most max_feature_diff and return connected components
+    # construct feature graph by connecting features within
+    # dist_thresh of each other and return connected components
     all_edges = combinations(range(n_features), 2)
     edges = compress(all_edges, dists <= dist_thresh)
     groups = nx.connected_components(nx.Graph(edges))
     return groups
+
+
+def test_group_features():
+    """
+    Test group_features
+    """
+    
+    features = [
+        np.array([[1,2,3]]).T,
+        np.array([[1,2,3]]).T,
+        np.array([[2,1,1]]).T,
+        np.array([[1,1,1]]).T
+    ]
+    binned_features = np.concatenate(features, axis=1)
+
+    table = {
+        'dist_thresh = 0 -> 1 component': {
+            'dist_thresh': 0,
+            'expected': [{0, 1}]
+        },
+        'dist_thresh = 1 -> 2 components': {
+            'dist_thresh': 1,
+            'expected': [{0, 1}, {2, 3}]
+        },
+        'dist_thresh = 2 -> all connected': {
+            'dist_thresh': 2,
+            'expected': [{0, 1, 2, 3}]
+        },
+        'dist_thresh = -1 -> empty list': {
+            'dist_thresh': -1,
+            'expected': []
+        },
+    }
+
+    for test_name, test in table.items():
+        dist_thresh = test['dist_thresh']
+        group = group_features(binned_features, dist_thresh=dist_thresh)
+        result = list(group)
+        assert result == test['expected'], test_name
 
 
 def test_vertical_log_binning():
@@ -145,11 +184,13 @@ def test_vertical_log_binning():
             'expected': np.array([0, 0, 1, 1, 2, 3, 4, 5, 6, 7])
         },
     }
-    for test_name, params in table.items():
-        frac = params.get('frac', 0.5)
-        result = vertical_log_binning(params['input'], frac=frac)
-        assert np.all(result == params['expected']), test_name
+
+    for test_name, test in table.items():
+        frac = test.get('frac', 0.5)
+        result = vertical_log_binning(test['input'], frac=frac)
+        assert np.all(result == test['expected']), test_name
 
 
 if __name__ == '__main__':
     test_vertical_log_binning()
+    test_group_features()
