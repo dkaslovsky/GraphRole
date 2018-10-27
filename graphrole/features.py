@@ -1,4 +1,4 @@
-from itertools import combinations, compress
+import itertools as it
 from typing import Iterator, Set
 
 import networkx as nx
@@ -67,8 +67,8 @@ def group_features(binned_features: np.ndarray, dist_thresh: int = 0) -> Iterato
 
     # construct feature graph by connecting features within
     # dist_thresh of each other and return connected components
-    all_edges = combinations(range(n_features), 2)
-    edges = compress(all_edges, dists <= dist_thresh)
+    all_edges = it.combinations(range(n_features), 2)
+    edges = it.compress(all_edges, dists <= dist_thresh)
     groups = nx.connected_components(nx.Graph(edges))
     return groups
 
