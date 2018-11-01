@@ -1,10 +1,9 @@
 import itertools as it
 
-import networkx as nx
 import pandas as pd
 
 from graphrole.features.similarity import group_features, vertical_log_binning
-from graphrole.graph import get_neighborhood_features
+from graphrole.graph import Graph, NetworkxGraph
 
 
 class RecursiveFeatureExtractor:
@@ -15,10 +14,10 @@ class RecursiveFeatureExtractor:
     ]
 
     def __init__(self,
-                 G: nx.Graph,
+                 G,
                  max_generations: int = 10):
         
-        self.G = G
+        self.graph = NetworkxGraph(G)
         self.max_generations = max_generations
         
         self.dist_thresh = 0
@@ -33,7 +32,7 @@ class RecursiveFeatureExtractor:
         self.final_features_names = set()
 
     def extract_features(self):
-        for generation in range(0, self.max_generations):
+        for generation in range(self.max_generations):
             
             self.generation_count = generation
             self.dist_thresh = generation 
@@ -57,18 +56,18 @@ class RecursiveFeatureExtractor:
     def _get_next_features(self):
         # initial (generation 0) features are neighborhood features
         if self.generation_count == 0:
-            return get_neighborhood_features(self.G)
+            return self.graph.get_neighborhood_features()
         # get nodes neighbors and aggregate
         # their previous generation features
         prev_features = self.generation_dict[self.generation_count - 1]
         features = {
             node: (
                 self.features
-                .reindex(index=self._get_neighbors(node), columns=prev_features)
+                .reindex(index=self.graph.get_neighbors(node), columns=prev_features)
                 .agg(self.recursive_aggs)
                 .pipe(self._aggregated_df_to_dict)
             )
-            for node in self.G.nodes
+            for node in self.graph.get_nodes()
         }
         return pd.DataFrame.from_dict(features, orient='index')
 
@@ -121,8 +120,3 @@ class RecursiveFeatureExtractor:
             for idx, row in agg_dicts.items()
             for key, val in row.items()
         }
-    
-    # TODO: not really a part of the class
-    # TODO: node type for typing?  Any?
-    def _get_neighbors(self, node):
-        return self.G[node].keys()
