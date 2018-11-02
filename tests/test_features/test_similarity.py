@@ -1,15 +1,14 @@
 import unittest
 
 import numpy as np
+import pandas as pd
 
 import graphrole.features.similarity as sim
 
 
-# TODO: add test for dataframe in TestGroupFeatures
-# TODO: use numpy.testing.assert_array_equal in TestVerticalLogBinning
-
-
 class TestGroupFeatures(unittest.TestCase):
+
+    """ Unit tests for group_features """
 
     features = [
         np.array([[1,2,3]]).T,
@@ -19,11 +18,7 @@ class TestGroupFeatures(unittest.TestCase):
     ]
     binned_features = np.concatenate(features, axis=1)
 
-    def test_group_features(self):
-        """
-        Test group_features()
-        """
-
+    def test_group_features_numpy(self):
         table = {
             'dist_thresh = 0 -> 1 component': {
                 'dist_thresh': 0,
@@ -48,14 +43,39 @@ class TestGroupFeatures(unittest.TestCase):
             groups = sim.group_features(self.binned_features, dist_thresh=dist_thresh)
             self.assertEqual(list(groups), test['expected'], test_name)
 
+    def test_group_features_pandas(self):
+        table = {
+            'dist_thresh = 0 -> 1 component': {
+                'dist_thresh': 0,
+                'expected': [{'a', 'b'}]
+            },
+            'dist_thresh = 1 -> 2 components': {
+                'dist_thresh': 1,
+                'expected': [{'a', 'b'}, {'c', 'd'}]
+            },
+            'dist_thresh = 2 -> all connected': {
+                'dist_thresh': 2,
+                'expected': [{'a', 'b', 'c', 'd'}]
+            },
+            'dist_thresh = -1 -> empty list': {
+                'dist_thresh': -1,
+                'expected': []
+            },
+        }
+
+        features = ['a', 'b', 'c', 'd']
+        binned_features_df = pd.DataFrame(self.binned_features, columns=features)
+        for test_name, test in table.items():
+            dist_thresh = test['dist_thresh']
+            groups = sim.group_features(binned_features_df, dist_thresh=dist_thresh)
+            self.assertEqual(list(groups), test['expected'], test_name)
+
 
 class TestVerticalLogBinning(unittest.TestCase):
 
+    """ Unit tests for vertical_log_binning() """
+    
     def test_vertical_log_binning(self):
-        """
-        Test vertical_log_binning()
-        """
-        
         table = {
             'empty': {
                 'input': np.array([]),
@@ -128,4 +148,4 @@ class TestVerticalLogBinning(unittest.TestCase):
         for test_name, test in table.items():
             frac = test.get('frac', 0.5)
             result = sim.vertical_log_binning(test['input'], frac=frac)
-            self.assertTrue(np.all(result == test['expected']), test_name)
+            np.testing.assert_array_equal(result, test['expected']), test_name

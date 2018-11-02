@@ -1,5 +1,5 @@
 import itertools as it
-from typing import Iterable, Iterator, Optional, Set, Union
+from typing import Iterator, Set, Union
 
 import networkx as nx
 import numpy as np
@@ -7,7 +7,10 @@ import pandas as pd
 from scipy.spatial.distance import pdist
 
 
-def vertical_log_binning(arr: np.array, frac: float = 0.5) -> np.array:
+def vertical_log_binning(
+    arr: np.array,
+    frac: float = 0.5
+) -> np.array:
     """
     Reassigns values of an array into vertical logarithmic bins
     :param arr: array to be binned
