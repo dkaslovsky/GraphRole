@@ -148,4 +148,4 @@ class TestVerticalLogBinning(unittest.TestCase):
         for test_name, test in table.items():
             frac = test.get('frac', 0.5)
             result = sim.vertical_log_binning(test['input'], frac=frac)
-            np.testing.assert_array_equal(result, test['expected']), test_name
+            np.testing.assert_array_equal(result, test['expected'], test_name)
