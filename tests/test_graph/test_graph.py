@@ -4,7 +4,7 @@ import unittest
 import networkx as nx
 import pandas as pd
 
-from graphrole.graph import NetworkxGraph
+from graphrole.graph.graph import NetworkxGraph
 
 
 class TestNetworkxGraph(unittest.TestCase):
