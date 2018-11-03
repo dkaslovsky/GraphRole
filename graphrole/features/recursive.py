@@ -1,9 +1,11 @@
 import itertools as it
+from typing import List, Optional
 
+import networkx as nx
 import pandas as pd
 
 from graphrole.features.similarity import group_features, vertical_log_binning
-from graphrole.graph import Graph, NetworkxGraph
+from graphrole.graph import NetworkxGraph
 
 
 class RecursiveFeatureExtractor:
@@ -13,18 +15,22 @@ class RecursiveFeatureExtractor:
         pd.DataFrame.mean,
     ]
 
-    def __init__(self,
-                 G,
-                 max_generations: int = 10):
-        
+    def __init__(
+        self,
+        G: nx.Graph,
+        max_generations: int = 10,
+        aggs: Optional[List] = None
+    ):
+  
         self.graph = NetworkxGraph(G)
         self.max_generations = max_generations
-        
+        self.aggs = aggs if aggs else self.recursive_aggs
+
         self.dist_thresh = 0
         self.generation_count = 0
 
         self.generation_dict = {}
-        
+
         self.features = None
         self.binned_features = None
 
@@ -35,7 +41,7 @@ class RecursiveFeatureExtractor:
         for generation in range(self.max_generations):
             
             self.generation_count = generation
-            self.dist_thresh = generation 
+            self.dist_thresh = generation
 
             next_features = self._get_next_features()
             self._update(next_features)
@@ -64,7 +70,7 @@ class RecursiveFeatureExtractor:
             node: (
                 self.features
                 .reindex(index=self.graph.get_neighbors(node), columns=prev_features)
-                .agg(self.recursive_aggs)
+                .agg(self.aggs)
                 .pipe(self._aggregated_df_to_dict)
             )
             for node in self.graph.get_nodes()
