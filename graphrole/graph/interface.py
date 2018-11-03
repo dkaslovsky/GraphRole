@@ -7,6 +7,13 @@ INTERFACES = {
 }
 
 
+def get_supported_graph_libraries():
+    """
+    Return list of supported graph libraries
+    """
+    return list(INTERFACES.keys())
+
+
 # NOTE: There are many ways of determining the module/package/type
 #       of an object: inspect, type, isinstance.  Here we access
 #       the __module__ property directly since isinstance returns
