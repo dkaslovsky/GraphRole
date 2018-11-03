@@ -1,11 +1,11 @@
 import itertools as it
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import networkx as nx
 import pandas as pd
 
 from graphrole.features.similarity import group_features, vertical_log_binning
-from graphrole.graph import NetworkxGraph
+from graphrole.graph.interface import get_interface
 
 
 class RecursiveFeatureExtractor:
@@ -17,12 +17,12 @@ class RecursiveFeatureExtractor:
 
     def __init__(
         self,
-        G: nx.Graph,
+        G: Any,
         max_generations: int = 10,
         aggs: Optional[List] = None
     ):
   
-        self.graph = NetworkxGraph(G)
+        self.graph = get_interface(G)
         self.max_generations = max_generations
         self.aggs = aggs if aggs else self.recursive_aggs
 
