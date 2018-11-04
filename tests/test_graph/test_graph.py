@@ -7,9 +7,9 @@ import pandas as pd
 from graphrole.graph.graph import NetworkxGraph
 
 
-class BaseGraphTestWrapper:
+class BaseGraphTest:
 
-    class BaseGraphTest(unittest.TestCase):
+    class BaseGraphTestCases(unittest.TestCase):
 
         """ Unit tests for NetworkxGraph """
         
@@ -91,7 +91,8 @@ class BaseGraphTestWrapper:
             self.assertTrue(result_features.equals(expected_features))
 
 
-class TestNetworkxGraph(BaseGraphTestWrapper.BaseGraphTest):
+class TestNetworkxGraph(BaseGraphTest.BaseGraphTestCases):
 
     def setUp(self):
-        self.graph = NetworkxGraph(nx.Graph(self.edges))
+        G = nx.Graph(self.edges)
+        self.graph = NetworkxGraph(G)
