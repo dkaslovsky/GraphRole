@@ -62,7 +62,7 @@ class RecursiveFeatureExtractor:
         # at each generation to be emitted as the final extracted features
         self.final_features = []
         # feature names of the features stored in the list of DataFrames (self.final_features)
-        # used mainnly for cheap deduplication of retained features
+        # used mainly for cheap deduplication of retained features
         self.final_features_names = set()
 
     def extract_features(self) -> pd.DataFrame:
@@ -182,7 +182,7 @@ class RecursiveFeatureExtractor:
         self.binned_features.drop(feature_names, axis=1, inplace=True)
         
     @staticmethod
-    def _aggregated_df_to_dict(agg_df: pd.DataFrame) -> Dict:
+    def _aggregated_df_to_dict(agg_df: pd.DataFrame) -> Dict[str, Union[float, int]]:
         """
         Transform DataFrame of aggregated features to dict formatted for
         concatenation with self.features DataFrame
