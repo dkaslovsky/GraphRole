@@ -8,8 +8,7 @@ import pandas as pd
 class Graph(ABC):
 
     """
-    Abstract class to define the interface used in graphrole.features.recursive 
-    module to interact with various graph libraries
+    Abstract class to define the interface used to interact with various graph libraries
     """
 
     @abstractmethod
