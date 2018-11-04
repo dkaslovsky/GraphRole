@@ -149,3 +149,108 @@ class TestVerticalLogBinning(unittest.TestCase):
             frac = test.get('frac', 0.5)
             result = sim.vertical_log_binning(test['input'], frac=frac)
             np.testing.assert_array_equal(result, test['expected'], test_name)
+
+
+class TestEdgeBasedConnectedComponents(unittest.TestCase):
+
+    """ Unit tests for _get_adj_dict, _dfs(), and _get_connected_components_from_edges """
+
+    disjoint_nodes = [
+        (0, 1), (2, 3)
+    ]
+
+    disjoint_nodes_adj = {
+        0: {1}, 1: {0}, 2: {3}, 3: {2}
+    }
+
+    disjoint_nodes_components = [
+        {0, 1}, {2, 3}
+    ]
+
+    cycle = [
+        (0, 1), (1, 2), (2, 0)
+    ]
+
+    cycle_adj = {
+        0: {1, 2}, 1: {0, 2}, 2: {0, 1}
+    }
+
+    cycle_components = [
+        {0, 1, 2}
+    ]
+
+    many_edges = [
+        (0, 7), (0, 8), (8, 2), (8, 5),
+        (1, 3), (6, 2), (6, 4)
+    ]
+
+    many_edges_adj = {
+        0: {7, 8}, 1: {3}, 2: {6, 8}, 3: {1}, 4: {6},
+        5: {8}, 6: {2, 4}, 7: {0}, 8: {0, 2, 5}
+    }
+
+    many_edges_components = [
+        {0, 2, 4, 5, 6, 7, 8}, {1, 3}
+    ]
+
+    def test__get_adj_dict(self):
+        table = {
+            'disjoint nodes': {
+                'edges': self.disjoint_nodes,
+                'expected': self.disjoint_nodes_adj
+            },
+            'cycle': {
+                'edges': self.cycle,
+                'expected': self.cycle_adj
+            },
+            'many edges': {
+                'edges': self.many_edges,
+                'expected': self.many_edges_adj
+            },
+        }
+        for test_name, test in table.items():
+            adj_dict = sim._get_adj_dict(test['edges'])
+            self.assertDictEqual(adj_dict, test['expected'], test_name)
+
+    def test__dfs(self):
+        table = {
+            'disjoint nodes': {
+                'adj': self.disjoint_nodes_adj,
+                'components': self.disjoint_nodes_components
+            },
+            'cycle': {
+                'adj': self.cycle_adj,
+                'components': self.cycle_components
+            },
+            'many edges': {
+                'adj': self.many_edges_adj,
+                'components': self.many_edges_components
+            },
+        }
+        for test_name, test in table.items():
+            adj = test['adj']
+            for component in test['components']:
+                for node in component:
+                    result_component = sim._dfs(adj, node)
+                    self.assertSetEqual(result_component, component, test_name)
+
+    def test__get_connected_components_from_edges(self):
+        table = {
+            'disjoint nodes': {
+                'edges': self.disjoint_nodes,
+                'expected': self.disjoint_nodes_components
+            },
+            'cycle': {
+                'edges': self.cycle,
+                'expected': self.cycle_components
+            },
+            'many edges': {
+                'edges': self.many_edges,
+                'expected': self.many_edges_components
+            },
+        }
+        for test_name, test in table.items():
+            components = sim._get_connected_components_from_edges(test['edges'])
+            expected = test['expected']
+            for component in components:
+                self.assertIn(component, expected, test_name)
