@@ -77,11 +77,10 @@ def group_features(
 
     # construct feature graph by connecting features within
     # dist_thresh of each other and return connected components
-    if isinstance(binned_features, pd.DataFrame):
+    try:
         nodes = binned_features.columns
-    else:
+    except AttributeError:
         nodes = range(n_features)
-
     all_edges = it.combinations(nodes, 2)
     edges = it.compress(all_edges, dists <= dist_thresh)
     groups = _get_connected_components_from_edges(edges)

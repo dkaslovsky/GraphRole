@@ -188,9 +188,10 @@ class RecursiveFeatureExtractor:
         concatenation with self.features DataFrame
         :param agg_df: agregated features resulting from df.agg(self.aggs)
         """
-        if isinstance(agg_df, pd.Series):
-            agg_df = agg_df.to_frame()
-        agg_dicts = agg_df.to_dict(orient='index')
+        try:
+            agg_dicts = agg_df.to_dict(orient='index')
+        except TypeError:
+            agg_dicts = agg_df.to_frame().to_dict(orient='index')
         return {
             f'{key}({idx})': val
             for idx, row in agg_dicts.items()
