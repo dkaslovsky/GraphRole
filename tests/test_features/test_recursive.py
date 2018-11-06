@@ -53,4 +53,31 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             'degree(mean)':         {'a': 1.5, 'b': 2.0, 'c': 1.5, 'd': 2.0},
             'internal_edges(mean)': {'a': 1.5, 'b': 2.0, 'c': 1.5, 'd': 2.0}
         }
-        self.assertTrue(np.allclose(features_gen1, pd.DataFrame(expected_features_gen1)))
+        self.assertTrue(np.allclose(
+            features_gen1.sort_index(axis=1),
+            pd.DataFrame(expected_features_gen1).sort_index(axis=1)
+        ))
+    
+    def test__update(self):
+        self.rfe.feature_group_thresh = -1  # has the effect of disabling pruning
+        # seed with existing features
+        existing_features = self.rfe._get_next_features()
+        self.rfe.final_features = [existing_features]
+        self.rfe.final_features_names = set(existing_features.columns)
+        # update with new features, include some overlap with old features
+        new_features = [
+            existing_features[existing_features.columns[0]],
+            pd.DataFrame(
+                np.random.rand(existing_features.shape[0], 2),
+                columns=['a', 'b'],
+                index=existing_features.index
+            )
+        ]
+        new_features = pd.concat(new_features, axis=1)
+        self.rfe._update(new_features)
+        # test final features
+        expected_new_final_features = new_features[['a', 'b']]
+        expected_new_final_feature_names = \
+            set(existing_features.columns).union(set(new_features.columns))
+        self.assertTrue(self.rfe.final_features[-1].equals(expected_new_final_features))
+        self.assertSetEqual(self.rfe.final_features_names, expected_new_final_feature_names)
