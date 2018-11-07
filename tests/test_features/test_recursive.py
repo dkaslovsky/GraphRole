@@ -4,6 +4,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+from graphrole.features.similarity import vertical_log_binning
 from graphrole.features.recursive import RecursiveFeatureExtractor
 
 
@@ -94,10 +95,70 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         pass
     
     def test__drop_features(self):
-        pass
+        features = self.rfe._get_next_features()
+        feature_names = features.columns
+        
+        table = {
+            'empty list': {
+                'to_drop': [],
+                'expected': feature_names
+            },
+            'one feature dropped': {
+                'to_drop': feature_names[0],
+                'expected': feature_names[1:]
+            },
+            'two features dropped': {
+                'to_drop': feature_names[:2],
+                'expected': feature_names[2:]
+            },
+            'all features dropped': {
+                'to_drop': feature_names,
+                'expected': []
+            },
+        }
+
+        for test_name, test in table.items():
+            self.setUp()
+            self.rfe._add_features(features)
+            self.rfe._drop_features(test['to_drop'])
+            self.assertSetEqual(
+                set(self.rfe.features.columns),
+                set(test['expected']),
+                test_name
+            )
+            self.assertSetEqual(
+                set(self.rfe.binned_features.columns),
+                set(test['expected']),
+                test_name
+            )
 
     def test__aggregated_df_to_dict(self):
-        pass
+        # dataframe
+        index = ['sum', 'mean']
+        columns = ['feature1', 'feature2', 'feature3']
+        data = np.arange(len(index) * len(columns)).reshape(len(index), len(columns))
+        df = pd.DataFrame(data, columns=columns, index=index)
+        agg_dict = self.rfe._aggregated_df_to_dict(df)
+        expected_agg_dict = {
+            'feature1(sum)':  0,
+            'feature2(sum)':  1,
+            'feature3(sum)':  2,
+            'feature1(mean)': 3,
+            'feature2(mean)': 4,
+            'feature3(mean)': 5,
+        }
+        self.assertDictEqual(agg_dict, expected_agg_dict)
+        
+        # TODO: THIS TEST FAILS!
+        # series
+        series = df.iloc[0]
+        agg_dict = self.rfe._aggregated_df_to_dict(series)
+        expected_agg_dict = {
+            'feature1(sum)':  0,
+            'feature2(sum)':  1,
+            'feature3(sum)':  2,
+        }
+        self.assertDictEqual(agg_dict, expected_agg_dict)
 
     def test__set_getitem(self):
         table = {
