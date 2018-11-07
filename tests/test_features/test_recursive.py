@@ -7,6 +7,8 @@ import pandas as pd
 from graphrole.features.recursive import RecursiveFeatureExtractor
 
 
+# pylint: disable=W0212
+
 class TestRecursiveFeatureExtractor(unittest.TestCase):
 
     """ Unit tests for RecursiveFeatureExtractor """
@@ -16,7 +18,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
     ]
 
     G = nx.Graph(edges)
-    
+
     aggs = [
         np.sum,
         np.mean

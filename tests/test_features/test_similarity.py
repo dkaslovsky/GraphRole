@@ -6,6 +6,8 @@ import pandas as pd
 import graphrole.features.similarity as sim
 
 
+# pylint: disable=W0212
+
 class TestGroupFeatures(unittest.TestCase):
 
     """ Unit tests for group_features """
