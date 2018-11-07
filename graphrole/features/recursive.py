@@ -1,13 +1,12 @@
 import itertools as it
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
+import numpy as np
 import pandas as pd
 
 from graphrole.features.similarity import group_features, vertical_log_binning
 from graphrole.graph.interface import (get_interface,
                                        get_supported_graph_libraries)
-
-# TODO: how to break ties in reproducible way in _get_oldest_feature?
 
 
 class RecursiveFeatureExtractor:
@@ -43,7 +42,7 @@ class RecursiveFeatureExtractor:
         # current number of recursive generations
         self.generation_count = 0
         # dict mapping recursive generation number to features generated
-        self.generation_dict = {}
+        self.generation_dict = {}  # Dict[int, Set[str]]
 
         # distance threshold for grouping (binned) features; incremented
         # by one at each generation, so although it always matches
@@ -149,18 +148,18 @@ class RecursiveFeatureExtractor:
             features_to_drop.extend(to_drop)
         self._drop_features(features_to_drop)
 
-    def _get_oldest_feature(self, feature_names: set) -> Union[str, int]:
+    def _get_oldest_feature(self, feature_names: Set[Union[str, int]]) -> Union[str, int]:
         """
         Return the feature from set of feature names that was generated
         in the earliest generation; tie between features from same iteration
-        are broken by internal iteration order of iter(feature_names)
+        are broken by sorted named order
         :param feature_names: set of feature names from which to find oldest
-        """
+        """ 
         for gen in range(self.generation_count):
             cur_gen = feature_names.intersection(self.generation_dict[gen])
             if cur_gen:
-                return next(iter(cur_gen))
-        return next(iter(feature_names))
+                return self._set_getitem(cur_gen)
+        return self._set_getitem(feature_names)
     
     def _add_features(self, features: pd.DataFrame) -> None:
         """
@@ -197,3 +196,12 @@ class RecursiveFeatureExtractor:
             for idx, row in agg_dicts.items()
             for key, val in row.items()
         }
+
+    @staticmethod
+    def _set_getitem(s: Set[Union[str, int]]) -> Union[str, int]:
+        """
+        Cast set to list and return first element after sorting to ensure
+        deterministic, repeatable getitem functionality from set
+        :param s: set
+        """
+        return np.partition(list(s), 0)[0]

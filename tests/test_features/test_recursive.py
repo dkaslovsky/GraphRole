@@ -81,3 +81,35 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             set(existing_features.columns).union(set(new_features.columns))
         self.assertTrue(self.rfe.final_features[-1].equals(expected_new_final_features))
         self.assertSetEqual(self.rfe.final_features_names, expected_new_final_feature_names)
+
+    def test__prune_features(self):
+        pass
+
+    def test__get_oldest_feature(self):
+        pass
+    
+    def test__add_features(self):
+        pass
+    
+    def test__drop_features(self):
+        pass
+
+    def test__aggregated_df_to_dict(self):
+        pass
+
+    def test__set_getitem(self):
+        table = {
+            'ints': {
+                'input': {3, 2, 5, 6},
+                'expected': 2
+            },
+            'strings': {
+                'input': {'d', 'b', 'a', 'c'},
+                'expected': 'a'
+            }
+        }
+        n_trials = 10
+        for test_name, test in table.items():
+            for _ in range(n_trials):
+                result = self.rfe._set_getitem(test['input'])
+                self.assertEqual(result, test['expected'], test_name)
