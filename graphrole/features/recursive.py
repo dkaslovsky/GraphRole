@@ -181,7 +181,9 @@ class RecursiveFeatureExtractor:
         self.binned_features.drop(feature_names, axis=1, inplace=True)
         
     @staticmethod
-    def _aggregated_df_to_dict(agg_df: pd.DataFrame) -> Dict[str, Union[float, int]]:
+    def _aggregated_df_to_dict(
+        agg_df: Union[pd.DataFrame, pd.Series]
+    ) -> Dict[str, Union[float, int]]:
         """
         Transform DataFrame of aggregated features to dict formatted for
         concatenation with self.features DataFrame
@@ -190,7 +192,7 @@ class RecursiveFeatureExtractor:
         try:
             agg_dicts = agg_df.to_dict(orient='index')
         except TypeError:
-            agg_dicts = agg_df.to_frame().to_dict(orient='index')
+            agg_dicts = agg_df.to_frame().T.to_dict(orient='index')
         return {
             f'{key}({idx})': val
             for idx, row in agg_dicts.items()

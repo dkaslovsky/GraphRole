@@ -185,33 +185,32 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
                 test_name
             )
 
-    # def test__aggregated_df_to_dict(self):
-    #     # dataframe
-    #     index = ['sum', 'mean']
-    #     columns = ['feature1', 'feature2', 'feature3']
-    #     data = np.arange(len(index) * len(columns)).reshape(len(index), len(columns))
-    #     df = pd.DataFrame(data, columns=columns, index=index)
-    #     agg_dict = self.rfe._aggregated_df_to_dict(df)
-    #     expected_agg_dict = {
-    #         'feature1(sum)':  0,
-    #         'feature2(sum)':  1,
-    #         'feature3(sum)':  2,
-    #         'feature1(mean)': 3,
-    #         'feature2(mean)': 4,
-    #         'feature3(mean)': 5,
-    #     }
-    #     self.assertDictEqual(agg_dict, expected_agg_dict)
-        
-    #     # TODO: THIS TEST FAILS!
-    #     # series
-    #     series = df.iloc[0]
-    #     agg_dict = self.rfe._aggregated_df_to_dict(series)
-    #     expected_agg_dict = {
-    #         'feature1(sum)':  0,
-    #         'feature2(sum)':  1,
-    #         'feature3(sum)':  2,
-    #     }
-    #     self.assertDictEqual(agg_dict, expected_agg_dict)
+    def test__aggregated_df_to_dict(self):
+        # dataframe
+        index = ['sum', 'mean']
+        columns = ['feature1', 'feature2', 'feature3']
+        data = np.arange(len(index) * len(columns)).reshape(len(index), len(columns))
+        df = pd.DataFrame(data, columns=columns, index=index)
+        agg_dict = self.rfe._aggregated_df_to_dict(df)
+        expected_agg_dict = {
+            'feature1(sum)':  0,
+            'feature2(sum)':  1,
+            'feature3(sum)':  2,
+            'feature1(mean)': 3,
+            'feature2(mean)': 4,
+            'feature3(mean)': 5,
+        }
+        self.assertDictEqual(agg_dict, expected_agg_dict)
+
+        # series
+        series = pd.Series([6, 7, 8], index=columns, name='prod')
+        agg_dict = self.rfe._aggregated_df_to_dict(series)
+        expected_agg_dict = {
+            'feature1(prod)': 6,
+            'feature2(prod)': 7,
+            'feature3(prod)': 8,
+        }
+        self.assertDictEqual(agg_dict, expected_agg_dict)
 
     def test__set_getitem(self):
         table = {
