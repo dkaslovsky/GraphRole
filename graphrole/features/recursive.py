@@ -1,4 +1,3 @@
-import itertools as it
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
 import numpy as np
@@ -11,8 +10,10 @@ from graphrole.graph.interface import (get_interface,
 
 class RecursiveFeatureExtractor:
 
+    """ Compute recursive features for nodes of a graph """
+
     supported_graph_libs = get_supported_graph_libraries()
-    
+
     default_aggs = [
         pd.DataFrame.sum,
         pd.DataFrame.mean,
@@ -29,7 +30,7 @@ class RecursiveFeatureExtractor:
         :param max_generations: maximum levels of recursion
         :param aggs: optional list of aggregations for each recursive generation
         """
-  
+
         graph = get_interface(G)
         if graph is None:
             raise TypeError(f'Input graph G must be from one of the following '
@@ -48,21 +49,21 @@ class RecursiveFeatureExtractor:
         # by one at each generation, so although it always matches
         # self.generation_count, we maintain it as a separate instance
         # variable for clarity
-        self.feature_group_thresh = 0
+        self._feature_group_thresh = 0
         
         # pd.DataFrame holding current features and their binned counterparts;
         # note that we could recompute binned_features at each generation rather
         # than store them in an instance variable, but this potential memory
         # optimization is not yet needed
-        self.features = None
-        self.binned_features = None
+        self._features = None            # Optional[pd.DataFrame]
+        self._binned_features = None     # Optional[pd.DataFrame]
 
         # list of pd.DataFrames to be concatenated representing the features retained
         # at each generation to be emitted as the final extracted features
-        self.final_features = []
+        self._final_features = []
         # feature names of the features stored in the list of DataFrames (self.final_features)
         # used mainly for cheap deduplication of retained features
-        self.final_features_names = set()
+        self._final_features_names = set()
 
     def extract_features(self) -> pd.DataFrame:
         """
@@ -71,7 +72,7 @@ class RecursiveFeatureExtractor:
         for generation in range(self.max_generations):
             
             self.generation_count = generation
-            self.feature_group_thresh = generation
+            self._feature_group_thresh = generation
 
             next_features = self._get_next_features()
             self._update(next_features)
@@ -79,18 +80,18 @@ class RecursiveFeatureExtractor:
             # stop if a recursive iteration results in no features retained
             retained_features = (
                 self.generation_dict[generation]
-                .intersection(self.features.columns)
+                .intersection(self._features.columns)
             )
             if not retained_features:
                 return self._finalize_features()
-        
+   
         return self._finalize_features()
-    
+
     def _finalize_features(self) -> pd.DataFrame:
         """
         Return concatenated DataFrame of final features
         """
-        return pd.concat(self.final_features, axis=1)
+        return pd.concat(self._final_features, axis=1)
 
     def _get_next_features(self) -> pd.DataFrame:
         """
@@ -105,7 +106,7 @@ class RecursiveFeatureExtractor:
         prev_features = self.generation_dict[self.generation_count - 1]
         features = {
             node: (
-                self.features
+                self._features
                 # select previous generation features for neighbors of current node
                 .reindex(index=self.graph.get_neighbors(node), columns=prev_features)
                 # aggregate
@@ -128,11 +129,11 @@ class RecursiveFeatureExtractor:
         # save features that remain after pruning
         # and that have not previously been saved
         new_features = (
-            self.features.columns
-            .difference(self.final_features_names)
+            self._features.columns
+            .difference(self._final_features_names)
         )
-        self.final_features.append(self.features[new_features])
-        self.final_features_names.update(new_features)
+        self._final_features.append(self._features[new_features])
+        self._final_features_names.update(new_features)
 
     def _prune_features(self) -> None:
         """
@@ -141,7 +142,7 @@ class RecursiveFeatureExtractor:
         with oldest (i.e., earliest generation) member feature
         """
         features_to_drop = []
-        groups = group_features(self.binned_features, dist_thresh=self.feature_group_thresh)
+        groups = group_features(self._binned_features, dist_thresh=self._feature_group_thresh)
         for group in groups:
             oldest = self._get_oldest_feature(group)
             to_drop = group - {oldest}
@@ -160,7 +161,7 @@ class RecursiveFeatureExtractor:
             if cur_gen:
                 return self._set_getitem(cur_gen)
         return self._set_getitem(feature_names)
-    
+
     def _add_features(self, features: pd.DataFrame) -> None:
         """
         Add features to self.features DataFrame; also update corresponding
@@ -168,8 +169,8 @@ class RecursiveFeatureExtractor:
         :param features: DataFrame of features to be added
         """
         binned_features = features.apply(vertical_log_binning)
-        self.features = pd.concat([self.features, features], axis=1)
-        self.binned_features = pd.concat([self.binned_features, binned_features], axis=1)
+        self._features = pd.concat([self._features, features], axis=1)
+        self._binned_features = pd.concat([self._binned_features, binned_features], axis=1)
         self.generation_dict[self.generation_count] = set(features.columns)
     
     def _drop_features(self, feature_names: Iterable) -> None:
@@ -177,9 +178,9 @@ class RecursiveFeatureExtractor:
         Drop feature_names from feature and binned feature DataFrames
         :param feature_names: iterable of feature names to be dropped
         """
-        self.features.drop(feature_names, axis=1, inplace=True)
-        self.binned_features.drop(feature_names, axis=1, inplace=True)
-        
+        self._features.drop(feature_names, axis=1, inplace=True)
+        self._binned_features.drop(feature_names, axis=1, inplace=True)
+
     @staticmethod
     def _aggregated_df_to_dict(
         agg_df: Union[pd.DataFrame, pd.Series]

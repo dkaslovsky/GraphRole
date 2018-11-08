@@ -28,6 +28,12 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
     def setUp(self):
         self.rfe = RecursiveFeatureExtractor(self.G, aggs=self.aggs)
 
+    def test_initialize_with_unknown_graph_type(self):
+        class SomeGraph:
+            pass
+        with self.assertRaises(TypeError):
+            _ = RecursiveFeatureExtractor(SomeGraph)
+
     def test__get_next_features_empty_graph(self):
         self.rfe = RecursiveFeatureExtractor(nx.Graph())
         features = self.rfe._get_next_features()
@@ -46,7 +52,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         # generation > 0
         self.rfe.generation_count = 1
         self.rfe.generation_dict[0] = set(features_gen0.columns)
-        self.rfe.features = features_gen0
+        self.rfe._features = features_gen0
         features_gen1 = self.rfe._get_next_features()
         expected_features_gen1 = {
             'external_edges(sum)':  {'a': 2.0, 'b': 1.0, 'c': 2.0, 'd': 1.0},
@@ -65,8 +71,8 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         self.rfe.feature_group_thresh = -1  # has the effect of disabling pruning
         # seed with existing features
         existing_features = self.rfe._get_next_features()
-        self.rfe.final_features = [existing_features]
-        self.rfe.final_features_names = set(existing_features.columns)
+        self.rfe._final_features = [existing_features]
+        self.rfe._final_features_names = set(existing_features.columns)
         # update with new features, include some overlap with old features
         new_features = [
             existing_features[existing_features.columns[0]],
@@ -82,8 +88,8 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         expected_new_final_features = new_features[['a', 'b']]
         expected_new_final_feature_names = \
             set(existing_features.columns).union(set(new_features.columns))
-        self.assertTrue(self.rfe.final_features[-1].equals(expected_new_final_features))
-        self.assertSetEqual(self.rfe.final_features_names, expected_new_final_feature_names)
+        self.assertTrue(self.rfe._final_features[-1].equals(expected_new_final_features))
+        self.assertSetEqual(self.rfe._final_features_names, expected_new_final_feature_names)
 
     def test__prune_features(self):
         # seed with 2 generations of features
@@ -95,8 +101,8 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         self.rfe._prune_features()
         # test remaining features
         expected_remaining_features = {'degree', 'external_edges', 'degree(mean)'}
-        self.assertSetEqual(set(self.rfe.features.columns), expected_remaining_features)
-        self.assertSetEqual(set(self.rfe.binned_features.columns), expected_remaining_features)
+        self.assertSetEqual(set(self.rfe._features.columns), expected_remaining_features)
+        self.assertSetEqual(set(self.rfe._binned_features.columns), expected_remaining_features)
 
     def test__get_oldest_feature(self):
         self.rfe.generation_count = 2
@@ -143,8 +149,8 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         # add features
         self.rfe._add_features(features)
         # test features, binned_features, and generation_dict
-        self.assertTrue(self.rfe.features.equals(features))
-        self.assertTrue(self.rfe.binned_features.equals(binned_features))
+        self.assertTrue(self.rfe._features.equals(features))
+        self.assertTrue(self.rfe._binned_features.equals(binned_features))
         self.assertDictEqual(self.rfe.generation_dict, expected_generation_dict)
 
     def test__drop_features(self):
@@ -175,12 +181,12 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             self.rfe._add_features(features)
             self.rfe._drop_features(test['to_drop'])
             self.assertSetEqual(
-                set(self.rfe.features.columns),
+                set(self.rfe._features.columns),
                 set(test['expected']),
                 test_name
             )
             self.assertSetEqual(
-                set(self.rfe.binned_features.columns),
+                set(self.rfe._binned_features.columns),
                 set(test['expected']),
                 test_name
             )
@@ -237,7 +243,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         }
         expected_final_features = pd.DataFrame.from_dict(data, orient='index')
         # seed with list of pieces of result
-        self.rfe.final_features = [
+        self.rfe._final_features = [
             expected_final_features[['a', 'b']],
             expected_final_features[['c', 'd']],
             expected_final_features['e'],
