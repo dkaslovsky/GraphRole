@@ -13,10 +13,10 @@ class TestGroupFeatures(unittest.TestCase):
     """ Unit tests for group_features """
 
     features = [
-        np.array([[1,2,3]]).T,
-        np.array([[1,2,3]]).T,
-        np.array([[2,1,1]]).T,
-        np.array([[1,1,1]]).T
+        np.array([[1, 2, 3]]).T,
+        np.array([[1, 2, 3]]).T,
+        np.array([[2, 1, 1]]).T,
+        np.array([[1, 1, 1]]).T
     ]
     binned_features = np.concatenate(features, axis=1)
 
