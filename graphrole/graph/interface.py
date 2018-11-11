@@ -1,13 +1,20 @@
-from typing import Any
+from typing import List, NewType
 
-from graphrole.graph import graph
+import graphrole.graph.graph as g
 
 INTERFACES = {
-    'networkx': graph.NetworkxGraph
+    'networkx': g.NetworkxGraph,
 }
 
 
-def get_supported_graph_libraries():
+# Once more than one interface is supported, we can define a TypeVar
+# constrained to the interfaces.  For now this will have to be a NewType.
+#from typing import TypeVar
+#GraphLib = TypeVar('GraphLib', *list(INTERFACES.keys()))
+GraphLibInstance = NewType('GraphLibInstance', g.NetworkxGraph)
+
+
+def get_supported_graph_libraries() -> List[str]:
     """
     Return list of supported graph libraries
     """
@@ -21,7 +28,7 @@ def get_supported_graph_libraries():
 #       does not support inheritance, and inspect.getmodule returns
 #       a module ojbect that is specific to the subclass.  There is
 #       likely a better approach and this should be futher investigated.
-def get_interface(G: Any) -> graph.Graph:
+def get_interface(G: GraphLibInstance) -> g.GraphInterface:
     """
     Return subclass of Graph initialized with G
     :param G: graph object from a supported graph libraries

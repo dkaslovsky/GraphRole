@@ -1,19 +1,19 @@
 import itertools as it
 from collections import defaultdict
-from typing import (Any, Dict, Iterable, Iterator, NewType, Optional, Set,
-                    Tuple, Union)
+from typing import Dict, Iterable, Iterator, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist
 
-Node = NewType('Node', Union[int, str])
+VectorLike = Union[np.array, pd.Series]
+MatrixLike = Union[np.ndarray, pd.DataFrame]
+
+NodeName = Union[int, str]
+Edge = Tuple[NodeName, NodeName]
 
 
-def vertical_log_binning(
-    arr: np.array,
-    frac: float = 0.5
-) -> np.array:
+def vertical_log_binning(arr: VectorLike, frac: float = 0.5) -> VectorLike:
     """
     Reassigns values of an array into vertical logarithmic bins
     :param arr: array to be binned
@@ -59,10 +59,7 @@ def vertical_log_binning(
     return binned
 
 
-def group_features(
-    binned_features: Union[np.ndarray, pd.DataFrame],
-    dist_thresh: int = 0
-) -> Iterator[Set[Node]]:
+def group_features(binned_features: MatrixLike, dist_thresh: int = 0) -> Iterator[Set[NodeName]]:
     """
     Group features according to connected components of graph
     induced by pairwise distances below distance threshold
@@ -87,9 +84,7 @@ def group_features(
     return groups
 
 
-def _get_connected_components_from_edges(
-    edges: Iterable[Tuple[Node]]
-) -> Iterator[Set[Node]]:
+def _get_connected_components_from_edges(edges: Iterable[Edge]) -> Iterator[Set[NodeName]]:
     """
     Generate connected components represented as sets of nodes
     :param edges: iterable of edges represented as (node1, node2) tuples
@@ -106,9 +101,7 @@ def _get_connected_components_from_edges(
             yield component
 
 
-def _get_adj_dict(
-    edges: Iterable[Tuple[Node]]
-) -> Dict[Node, Set[Node]]:
+def _get_adj_dict(edges: Iterable[Edge]) -> Dict[NodeName, Set[NodeName]]:
     """
     Construct dict mapping node to a set of its neighbor nodes
     :param edges: iterable of edges represented as (node1, node2) tuples
@@ -121,10 +114,10 @@ def _get_adj_dict(
 
 
 def _dfs(
-    adj_dict: Dict[Any, Set],
-    node: Node,
-    visited: Optional[Set] = None
-) -> Set:
+    adj_dict: Dict[NodeName, Set[NodeName]],
+    node: NodeName,
+    visited: Optional[Set[NodeName]] = None
+) -> Set[NodeName]:
     """
     Run recursive depth first search starting from node and
     return set of all visited nodes

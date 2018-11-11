@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable
+from typing import Any, Iterable, TypeVar
 
 import networkx as nx
 import pandas as pd
+
+
+GraphInterface = TypeVar('GraphInterface', bound='Graph')
 
 
 class Graph(ABC):
