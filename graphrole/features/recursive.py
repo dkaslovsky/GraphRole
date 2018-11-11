@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Set, TypeVar, Union
+from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
 import numpy as np
 import pandas as pd
