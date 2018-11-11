@@ -218,20 +218,20 @@ class TestEdgeBasedConnectedComponents(unittest.TestCase):
         table = {
             'disjoint nodes': {
                 'adj': self.disjoint_nodes_adj,
-                'components': self.disjoint_nodes_components
+                'expected components': self.disjoint_nodes_components
             },
             'cycle': {
                 'adj': self.cycle_adj,
-                'components': self.cycle_components
+                'expected components': self.cycle_components
             },
             'many edges': {
                 'adj': self.many_edges_adj,
-                'components': self.many_edges_components
+                'expected components': self.many_edges_components
             },
         }
         for test_name, test in table.items():
             adj = test['adj']
-            for component in test['components']:
+            for component in test['expected components']:
                 for node in component:
                     result_component = sim._dfs(adj, node)
                     self.assertSetEqual(result_component, component, test_name)
