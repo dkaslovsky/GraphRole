@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, TypeVar
+from typing import Iterable, TypeVar, Union
 
 import networkx as nx
 import pandas as pd
 
 
+NodeName = Union[int, str]
 GraphInterface = TypeVar('GraphInterface', bound='Graph')
 
 
@@ -22,14 +23,14 @@ class Graph(ABC):
         pass
     
     @abstractmethod
-    def get_nodes(self) -> Iterable:
+    def get_nodes(self) -> Iterable[NodeName]:
         """
         Return iterable of nodes in the graph
         """
         pass
 
     @abstractmethod
-    def get_neighbors(self, node: Any) -> Iterable:
+    def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
         """
         Return iterable of neighbors of specified node
         """
@@ -56,13 +57,13 @@ class NetworkxGraph(Graph):
                 .rename_axis('node', axis=0)
                 .sort_index())
 
-    def get_nodes(self) -> Iterable:
+    def get_nodes(self) -> Iterable[NodeName]:
         """
         Return iterable of nodes in the graph
         """
         return self.G.nodes
 
-    def get_neighbors(self, node: Any) -> Iterable:
+    def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
         """
         Return iterable of neighbors of specified node
         """
@@ -89,5 +90,5 @@ class NetworkxGraph(Graph):
                 'internal_edges': len(ego.edges),
                 'external_edges': len(list(nx.edge_boundary(self.G, ego.nodes)))
             }
-            egonet_features[node] = features        
+            egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')

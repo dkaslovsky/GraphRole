@@ -9,7 +9,7 @@ from scipy.spatial.distance import pdist
 VectorLike = Union[np.array, pd.Series]
 MatrixLike = Union[np.ndarray, pd.DataFrame]
 
-NodeName = Union[int, str]
+NodeName = Union[int, str]   # TODO: should be imported from graph.graph?
 Edge = Tuple[NodeName, NodeName]
 
 
