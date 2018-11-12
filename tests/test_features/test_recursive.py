@@ -47,7 +47,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             'internal_edges': {'a': 2, 'b': 1, 'c': 2, 'd': 1},
             'external_edges': {'a': 1, 'b': 1, 'c': 1, 'd': 1}
         }
-        self.assertTrue(features_gen0.equals(pd.DataFrame(expected_features_gen0)))
+        self.assertTrue(np.allclose(features_gen0, pd.DataFrame(expected_features_gen0)))
 
         # generation > 0
         self.rfe.generation_count = 1
@@ -88,7 +88,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         expected_new_final_features = new_features[['a', 'b']]
         expected_new_final_feature_names = \
             set(existing_features.columns).union(set(new_features.columns))
-        self.assertTrue(self.rfe._final_features[-1].equals(expected_new_final_features))
+        self.assertTrue(np.allclose(self.rfe._final_features[-1], expected_new_final_features))
         self.assertSetEqual(self.rfe._final_features_names, expected_new_final_feature_names)
 
     def test__prune_features(self):
@@ -149,8 +149,8 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         # add features
         self.rfe._add_features(features)
         # test features, binned_features, and generation_dict
-        self.assertTrue(self.rfe._features.equals(features))
-        self.assertTrue(self.rfe._binned_features.equals(binned_features))
+        self.assertTrue(np.allclose(self.rfe._features, features))
+        self.assertTrue(np.allclose(self.rfe._binned_features, binned_features))
         self.assertDictEqual(self.rfe.generation_dict, expected_generation_dict)
 
     def test__drop_features(self):
@@ -250,4 +250,4 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         ]
         # test
         final_features = self.rfe._finalize_features()
-        self.assertTrue(final_features.equals(expected_final_features))
+        self.assertTrue(np.allclose(final_features, expected_final_features))

@@ -2,6 +2,7 @@ import itertools as it
 import unittest
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 
 from graphrole.graph.graph import NetworkxGraph
@@ -89,6 +90,7 @@ class BaseGraphTest:
             expected_features = pd.concat(features, axis=1)
             result_features = self.graph.get_neighborhood_features()
             self.assertTrue(result_features.equals(expected_features))
+            self.assertTrue(np.allclose(result_features, expected_features))
 
 
 class TestNetworkxGraph(BaseGraphTest.BaseGraphTestCases):
