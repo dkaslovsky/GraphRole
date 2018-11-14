@@ -1,11 +1,12 @@
 import itertools as it
 import unittest
 
+import igraph as ig
 import networkx as nx
 import numpy as np
 import pandas as pd
 
-from graphrole.graph.graph import NetworkxGraph
+from graphrole.graph.graph import IgraphGraph, NetworkxGraph
 
 
 class BaseGraphTest:
@@ -15,16 +16,16 @@ class BaseGraphTest:
         """ Unit tests for NetworkxGraph """
         
         graph = None
-        
-        _edges = [
+
+        edges = [
             (0, 1), (0, 2), (0, 3),
             (3, 6), (4, 5), (4, 6),
             (5, 6)
         ]
 
         @property
-        def edges(self):
-            return self._edges
+        def n_nodes(self):
+            return 1 + max(it.chain.from_iterable(self.edges))
             
         def test_get_nodes(self):
             nodes = self.graph.get_nodes()
@@ -89,7 +90,6 @@ class BaseGraphTest:
             ]
             expected_features = pd.concat(features, axis=1)
             result_features = self.graph.get_neighborhood_features()
-            self.assertTrue(result_features.equals(expected_features))
             self.assertTrue(np.allclose(result_features, expected_features))
 
 
@@ -98,3 +98,12 @@ class TestNetworkxGraph(BaseGraphTest.BaseGraphTestCases):
     def setUp(self):
         G = nx.Graph(self.edges)
         self.graph = NetworkxGraph(G)
+
+
+class TestIgraphGraph(BaseGraphTest.BaseGraphTestCases):
+
+    def setUp(self):
+        G = ig.Graph()
+        G.add_vertices(range(self.n_nodes))
+        G.add_edges(self.edges)
+        self.graph = IgraphGraph(G)

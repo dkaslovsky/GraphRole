@@ -1,17 +1,14 @@
-from typing import List, NewType
+from typing import List, TypeVar
 
 import graphrole.graph.graph as g
 
 INTERFACES = {
     'networkx': g.NetworkxGraph,
+    'igraph':   g.IgraphGraph,
 }
 
 
-# Once more than one interface is supported, we can define a TypeVar
-# constrained to the interfaces.  For now this will have to be a NewType.
-#from typing import TypeVar
-#GraphLib = TypeVar('GraphLib', *list(INTERFACES.keys()))
-GraphLibInstance = NewType('GraphLibInstance', g.NetworkxGraph)
+GraphLibInstance = TypeVar('GraphLibInstance', *list(INTERFACES.keys()))
 
 
 def get_supported_graph_libraries() -> List[str]:
