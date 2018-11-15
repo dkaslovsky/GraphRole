@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Tuple, TypeVar, Union
+from functools import partial
+from typing import Iterable, List, Set, Tuple, TypeVar, Union
 
 import igraph as ig
 import networkx as nx
@@ -97,11 +98,7 @@ class NetworkxGraph(Graph):
 
 
 # TODO: CHANGE NAME!
-# TODO: can't rely on .index, not the same as identifier, use 'name'
-# TODO: add a check_names method to add names matching index if G doesn't have names
-# TODO: docstring(s) for _get_edge_boundary
-# TODO: add example with igraph
-# TODO: return type for _get_edge_boundary isn't right
+# TODO: Move boilerplate to base class
 class IgraphGraph(Graph):
 
     """ Interface for igraph Graph object """
@@ -126,7 +123,7 @@ class IgraphGraph(Graph):
         """
         Return iterable of nodes in the graph
         """
-        return (vertex.index for vertex in self.G.vs())
+        return self.G.vs().indices
 
     def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
         """
@@ -155,24 +152,33 @@ class IgraphGraph(Graph):
             ego = self.G.induced_subgraph(ego_nodes)
             features = {
                 'internal_edges': len(ego.es()),
-                'external_edges': len(self._get_edge_boundary(self.G, ego))
+                'external_edges': len(self._get_edge_boundary(ego_nodes))
             }
             egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
+    def _get_edge_boundary(self, interior_vertex_ids: List[NodeName]) -> List[Edge]:
+        """
+        Return the list of edges on the boundary of the vertex sets defined
+        by interior_vertex_ids and its complement
+        :param interior_vertex_ids: list of vertex ids defining the interior
+        """
+        interior = set(interior_vertex_ids)
+        exterior = set(self.get_nodes()) - interior
+        _is_boundary = partial(self._is_boundary, interior=interior, exterior=exterior)
+        return [edge.tuple for edge in self.G.es() if _is_boundary(edge.tuple)]
+
     @staticmethod
-    def _get_edge_boundary(graph: ig.Graph, subgraph: ig.Graph) -> List[Edge]:
-
-        def _is_boundary(edge, vertex_seq1, vertex_seq2):
-            vertices1 = set(vertex_seq1['name'])
-            vertices2 = set(vertex_seq2['name'])
-            e1, e2 = edge.tuple
-            return (
-                (e1 in vertices1 and e2 in vertices2)
-                or
-                (e1 in vertices2 and e2 in vertices1)
-            )
-
-        sub_vertices = subgraph.vs()
-        sub_vertices_comp = graph.vs().select(lambda x: x['name'] not in sub_vertices['name'])
-        return graph.es().select(lambda x: _is_boundary(x, sub_vertices, sub_vertices_comp))
+    def _is_boundary(edge: Edge, interior: Set[NodeName], exterior: Set[NodeName]) -> bool:
+        """
+        Return True if edge is on the boundary of the interior and exterior vertex sets (else False)
+        :param edge: edge to evaluate
+        :param interior: set of vertex ids
+        :param exterior: set of vertex ids
+        """
+        v1, v2 = edge
+        return (
+            (v1 in interior and v2 in exterior)
+            or
+            (v1 in exterior and v2 in interior)
+        )

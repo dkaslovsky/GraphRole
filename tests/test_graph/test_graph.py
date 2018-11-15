@@ -14,7 +14,7 @@ class BaseGraphTest:
     class BaseGraphTestCases(unittest.TestCase):
 
         """ Unit tests for NetworkxGraph """
-        
+
         graph = None
 
         edges = [
@@ -104,6 +104,6 @@ class TestIgraphGraph(BaseGraphTest.BaseGraphTestCases):
 
     def setUp(self):
         G = ig.Graph()
-        G.add_vertices(range(self.n_nodes))
+        G.add_vertices(self.n_nodes)
         G.add_edges(self.edges)
         self.graph = IgraphGraph(G)
