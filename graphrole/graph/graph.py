@@ -97,8 +97,6 @@ class NetworkxGraph(Graph):
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
 
-# TODO: CHANGE NAME!
-# TODO: Move boilerplate to base class
 class IgraphGraph(Graph):
 
     """ Interface for igraph Graph object """
