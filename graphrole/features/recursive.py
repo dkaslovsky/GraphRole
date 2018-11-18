@@ -3,7 +3,8 @@ from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 import numpy as np
 import pandas as pd
 
-from graphrole.features.similarity import group_features, vertical_log_binning
+from graphrole.features.binning import vertical_log_binning
+from graphrole.features.similarity import group_features
 from graphrole.graph import interface
 
 DataFrameLike = Union[pd.DataFrame, pd.Series]

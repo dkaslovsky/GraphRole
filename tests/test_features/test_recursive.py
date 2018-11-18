@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from graphrole.features.similarity import vertical_log_binning
+from graphrole.features.binning import vertical_log_binning
 from graphrole.features.recursive import RecursiveFeatureExtractor
 
 
