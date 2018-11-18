@@ -1,13 +1,17 @@
 from typing import List, TypeVar
 
-import graphrole.graph.graph as g
+from graphrole.graph.interface.base import BaseGraphInterface
+from graphrole.graph.interface.igraph import IgraphInterface
+from graphrole.graph.interface.networkx import NetworkxInterface
 
 INTERFACES = {
-    'networkx': g.NetworkxGraph,
-    'igraph':   g.IgraphGraph,
+    'networkx': NetworkxInterface,
+    'igraph':   IgraphInterface,
 }
 
 
+# define types
+GraphInterfaceType = TypeVar('GraphInterfaceType', bound=BaseGraphInterface)
 GraphLibInstance = TypeVar('GraphLibInstance', *list(INTERFACES.keys()))
 
 
@@ -25,7 +29,7 @@ def get_supported_graph_libraries() -> List[str]:
 #       does not support inheritance, and inspect.getmodule returns
 #       a module ojbect that is specific to the subclass.  There is
 #       likely a better approach and this should be futher investigated.
-def get_interface(G: GraphLibInstance) -> g.GraphInterface:
+def get_interface(G: GraphLibInstance) -> GraphInterfaceType:
     """
     Return subclass of Graph initialized with G
     :param G: graph object from a supported graph libraries
@@ -36,7 +40,7 @@ def get_interface(G: GraphLibInstance) -> g.GraphInterface:
     except (AttributeError, IndexError):
         return None
     try:
-        interface = INTERFACES[package]
+        graph_interface = INTERFACES[package]
     except KeyError:
         return None
-    return interface(G)
+    return graph_interface(G)
