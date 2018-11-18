@@ -4,8 +4,7 @@ import numpy as np
 import pandas as pd
 
 from graphrole.features.similarity import group_features, vertical_log_binning
-from graphrole.graph.interface import (GraphLibInstance, get_interface,
-                                       get_supported_graph_libraries)
+from graphrole.graph import interface
 
 DataFrameLike = Union[pd.DataFrame, pd.Series]
 T = TypeVar('T', int, str)  # generic for feature name
@@ -15,7 +14,7 @@ class RecursiveFeatureExtractor:
 
     """ Compute recursive features for nodes of a graph """
 
-    supported_graph_libs = get_supported_graph_libraries()
+    supported_graph_libs = interface.get_supported_graph_libraries()
 
     default_aggs = [
         pd.DataFrame.sum,
@@ -23,7 +22,7 @@ class RecursiveFeatureExtractor:
     ]
 
     def __init__(self,
-        G: GraphLibInstance,
+        G: interface.GraphLibInstance,
         max_generations: int = 10,
         aggs: Optional[List] = None
     ) -> None:
@@ -33,7 +32,7 @@ class RecursiveFeatureExtractor:
         :param aggs: optional list of aggregations for each recursive generation
         """
 
-        graph = get_interface(G)
+        graph = interface.get_interface(G)
         if graph is None:
             raise TypeError(f'Input graph G must be from one of the following '
                             f'supported libraries: {self.supported_graph_libs}')
