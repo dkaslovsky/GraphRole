@@ -6,7 +6,6 @@ import pandas as pd
 from scipy.spatial.distance import pdist
 
 from graphrole.features.binning import vertical_log_binning
-from graphrole.features.similarity import group_features
 from graphrole.graph import interface
 from graphrole.graph.graph import AdjacencyDictGraph
 
@@ -158,7 +157,7 @@ class RecursiveFeatureExtractor:
         Group features according to connected components of feature graph induced
         by pairwise distances below distance threshold
         """
-        # condensed vector of pairwise distances measuring
+        # get condensed vector of pairwise distances measuring
         # max_i |u[i] - v[i]| for features u, v
         dists = pdist(self._binned_features.T, metric='chebychev')
         # construct feature graph by connecting features within

@@ -19,6 +19,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
     ]
 
     G = nx.Graph(edges)
+    G_empty = nx.Graph()
 
     aggs = [
         np.sum,
@@ -35,7 +36,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             _ = RecursiveFeatureExtractor(SomeGraph)
 
     def test__get_next_features_empty_graph(self):
-        self.rfe = RecursiveFeatureExtractor(nx.Graph())
+        self.rfe = RecursiveFeatureExtractor(self.G_empty)
         features = self.rfe._get_next_features()
         self.assertTrue(features.empty)
     
@@ -103,6 +104,41 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         expected_remaining_features = {'degree', 'external_edges', 'degree(mean)'}
         self.assertSetEqual(set(self.rfe._features.columns), expected_remaining_features)
         self.assertSetEqual(set(self.rfe._binned_features.columns), expected_remaining_features)
+
+    def test__group_features(self):
+        table = {
+            'dist_thresh = 0 -> 1 component': {
+                'dist_thresh': 0,
+                'expected': [{'a', 'b'}]
+            },
+            'dist_thresh = 1 -> 2 components': {
+                'dist_thresh': 1,
+                'expected': [{'a', 'b'}, {'c', 'd'}]
+            },
+            'dist_thresh = 2 -> all connected': {
+                'dist_thresh': 2,
+                'expected': [{'a', 'b', 'c', 'd'}]
+            },
+            'dist_thresh = -1 -> empty list': {
+                'dist_thresh': -1,
+                'expected': []
+            },
+        }
+
+        features = [
+            np.array([[1, 2, 3]]).T,
+            np.array([[1, 2, 3]]).T,
+            np.array([[2, 1, 1]]).T,
+            np.array([[1, 1, 1]]).T
+        ]
+        feature_names = ['a', 'b', 'c', 'd']
+        binned_features = np.concatenate(features, axis=1)
+        self.rfe._binned_features = pd.DataFrame(binned_features, columns=feature_names)
+        
+        for test_name, test in table.items():
+            self.rfe._feature_group_thresh = test['dist_thresh']
+            groups = self.rfe._group_features()
+            self.assertEqual(list(groups), test['expected'], test_name)
 
     def test__get_oldest_feature(self):
         self.rfe.generation_count = 2
