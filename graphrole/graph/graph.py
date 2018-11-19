@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Iterable, Iterator, Optional, Set
+from typing import Dict, Iterable, Iterator, Set
 
 from graphrole.graph.interface import Edge, Node
 
