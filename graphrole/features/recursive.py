@@ -1,11 +1,14 @@
-from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
+import itertools as it
+from typing import Dict, Iterable, Iterator, List, Optional, Set, TypeVar, Union
 
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import pdist
 
 from graphrole.features.binning import vertical_log_binning
 from graphrole.features.similarity import group_features
 from graphrole.graph import interface
+from graphrole.graph.graph import AdjacencyDictGraph
 
 DataFrameLike = Union[pd.DataFrame, pd.Series]
 T = TypeVar('T', int, str)  # generic for feature name
@@ -143,12 +146,29 @@ class RecursiveFeatureExtractor:
         with oldest (i.e., earliest generation) member feature
         """
         features_to_drop = []
-        groups = group_features(self._binned_features, dist_thresh=self._feature_group_thresh)
+        groups = self._group_features()
         for group in groups:
             oldest = self._get_oldest_feature(group)
             to_drop = group - {oldest}
             features_to_drop.extend(to_drop)
         self._drop_features(features_to_drop)
+    
+    def _group_features(self) -> Iterator[Set[interface.NodeName]]:
+        """
+        Group features according to connected components of feature graph induced
+        by pairwise distances below distance threshold
+        """
+        # condensed vector of pairwise distances measuring
+        # max_i |u[i] - v[i]| for features u, v
+        dists = pdist(self._binned_features.T, metric='chebychev')
+        # construct feature graph by connecting features within
+        # dist_thresh of each other and return connected components
+        nodes = self._binned_features.columns
+        all_edges = it.combinations(nodes, 2)
+        edges = it.compress(all_edges, dists <= self._feature_group_thresh)
+        feature_graph = AdjacencyDictGraph(edges)
+        groups = feature_graph.get_connected_components()
+        return groups
 
     def _get_oldest_feature(self, feature_names: Set[T]) -> T:
         """
