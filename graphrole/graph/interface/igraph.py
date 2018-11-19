@@ -4,7 +4,7 @@ from typing import Iterable, List, Set
 import igraph as ig
 import pandas as pd
 
-from graphrole.graph.interface import BaseGraphInterface, Edge, NodeName
+from graphrole.graph.interface import BaseGraphInterface, Edge, Node
 
 
 class IgraphInterface(BaseGraphInterface):
@@ -27,13 +27,13 @@ class IgraphInterface(BaseGraphInterface):
                 .rename_axis('node', axis=0)
                 .sort_index())
 
-    def get_nodes(self) -> Iterable[NodeName]:
+    def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph
         """
         return self.G.vs().indices
 
-    def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
+    def get_neighbors(self, node: Node) -> Iterable[Node]:
         """
         Return iterable of neighbors of specified node
         """
@@ -65,7 +65,7 @@ class IgraphInterface(BaseGraphInterface):
             egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
-    def _get_edge_boundary(self, interior_vertex_ids: List[NodeName]) -> List[Edge]:
+    def _get_edge_boundary(self, interior_vertex_ids: List[Node]) -> List[Edge]:
         """
         Return the list of edges on the boundary of the vertex sets defined
         by interior_vertex_ids and its complement
@@ -77,7 +77,7 @@ class IgraphInterface(BaseGraphInterface):
         return [edge.tuple for edge in self.G.es() if _is_boundary(edge.tuple)]
 
     @staticmethod
-    def _is_boundary(edge: Edge, interior: Set[NodeName], exterior: Set[NodeName]) -> bool:
+    def _is_boundary(edge: Edge, interior: Set[Node], exterior: Set[Node]) -> bool:
         """
         Return True if edge is on the boundary of the interior and exterior vertex sets (else False)
         :param edge: edge to evaluate

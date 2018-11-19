@@ -1,6 +1,6 @@
 from typing import List, TypeVar
 
-from graphrole.graph.interface.base import BaseGraphInterface, Edge, NodeName
+from graphrole.graph.interface.base import BaseGraphInterface, Edge, Node
 from graphrole.graph.interface.igraph import IgraphInterface
 from graphrole.graph.interface.networkx import NetworkxInterface
 

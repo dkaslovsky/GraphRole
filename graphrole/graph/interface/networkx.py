@@ -3,7 +3,7 @@ from typing import Iterable
 import networkx as nx
 import pandas as pd
 
-from graphrole.graph.interface import BaseGraphInterface, NodeName
+from graphrole.graph.interface import BaseGraphInterface, Node
 
 
 class NetworkxInterface(BaseGraphInterface):
@@ -26,13 +26,13 @@ class NetworkxInterface(BaseGraphInterface):
                 .rename_axis('node', axis=0)
                 .sort_index())
 
-    def get_nodes(self) -> Iterable[NodeName]:
+    def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph
         """
         return self.G.nodes
 
-    def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
+    def get_neighbors(self, node: Node) -> Iterable[Node]:
         """
         Return iterable of neighbors of specified node
         """

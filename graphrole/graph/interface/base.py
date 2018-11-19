@@ -4,8 +4,8 @@ from typing import Iterable, Tuple, TypeVar, Union
 import pandas as pd
 
 
-NodeName = Union[int, str]
-Edge = Tuple[NodeName, NodeName]
+Node = Union[int, str]
+Edge = Tuple[Node, Node]
 
 
 class BaseGraphInterface(ABC):
@@ -22,14 +22,14 @@ class BaseGraphInterface(ABC):
         pass
     
     @abstractmethod
-    def get_nodes(self) -> Iterable[NodeName]:
+    def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph
         """
         pass
 
     @abstractmethod
-    def get_neighbors(self, node: NodeName) -> Iterable[NodeName]:
+    def get_neighbors(self, node: Node) -> Iterable[Node]:
         """
         Return iterable of neighbors of specified node
         """

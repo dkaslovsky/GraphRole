@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, Optional, Set
 
-from graphrole.graph.interface import Edge, NodeName
+from graphrole.graph.interface import Edge, Node
 
 
 class AdjacencyDictGraph:
@@ -15,7 +15,7 @@ class AdjacencyDictGraph:
         self.edges = edges
         self._build_adjacency_dict()
 
-    def get_connected_components(self) -> Iterator[Set[NodeName]]:
+    def get_connected_components(self) -> Iterator[Set[Node]]:
         """
         Generate connected components represented as sets of nodes
         """
@@ -28,7 +28,7 @@ class AdjacencyDictGraph:
                 visited.update(component)
                 yield component
 
-    def _build_adjacency_dict(self) -> Dict[NodeName, Set[NodeName]]:
+    def _build_adjacency_dict(self) -> Dict[Node, Set[Node]]:
         """
         Construct adjacency dict mapping node to a set of its neighbor nodes
         """
@@ -38,7 +38,7 @@ class AdjacencyDictGraph:
             adj[node2].add(node1)
         self.adj_dict = dict(adj)
 
-    def _dfs(self, node: NodeName, visited: Optional[Set[NodeName]] = None) -> Set[NodeName]:
+    def _dfs(self, node: Node, visited: Optional[Set[Node]] = None) -> Set[Node]:
         """
         Run recursive depth first search starting from node and
         return set of all visited nodes

@@ -152,7 +152,7 @@ class RecursiveFeatureExtractor:
             features_to_drop.extend(to_drop)
         self._drop_features(features_to_drop)
     
-    def _group_features(self) -> Iterator[Set[interface.NodeName]]:
+    def _group_features(self) -> Iterator[Set[interface.Node]]:
         """
         Group features according to connected components of feature graph induced
         by pairwise distances below distance threshold
