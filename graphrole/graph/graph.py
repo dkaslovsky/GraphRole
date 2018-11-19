@@ -38,17 +38,20 @@ class AdjacencyDictGraph:
             adj[node2].add(node1)
         self.adj_dict = dict(adj)
 
-    def _dfs(self, node: Node, visited: Optional[Set[Node]] = None) -> Set[Node]:
+    def _dfs(self, node: Node) -> Set[Node]:
         """
-        Run recursive depth first search starting from node and
-        return set of all visited nodes
+        Run depth first search starting from node and return set of all visited nodes
         :param node: node at which to start search
-        :param visited: set of all nodes visited, initially should be None
         """
-        if not visited:
-            visited = set()
-        visited.add(node)
-        next_level_unvisited = self.adj_dict[node] - visited
-        for nbr in next_level_unvisited:
-            self._dfs(nbr, visited)
+        visited = set()
+        # use a list as a stack; pop() retreives last element ensuring LIFO
+        node_stack = [node]
+        while node_stack:
+            cur_node = node_stack.pop()
+            if cur_node in visited:
+                continue
+            visited.add(cur_node)
+            # add cur_node's non-visited neighors to the stack
+            neighbors_to_visit = self.adj_dict[cur_node] - visited
+            node_stack.extend(neighbors_to_visit)
         return visited
