@@ -69,7 +69,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
         ))
     
     def test__update(self):
-        self.rfe.feature_group_thresh = -1  # has the effect of disabling pruning
+        self.rfe._feature_group_thresh = -1  # has the effect of disabling pruning
         # seed with existing features
         existing_features = self.rfe._get_next_features()
         self.rfe._final_features = [existing_features]
