@@ -44,7 +44,7 @@ class AdjacencyDictGraph:
         :param node: node at which to start search
         """
         visited = set()
-        # use a list as a stack; pop() retreives last element ensuring LIFO
+        # use a list as a stack; pop() retrieves last element ensuring LIFO
         node_stack = [node]
         while node_stack:
             cur_node = node_stack.pop()
