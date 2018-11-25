@@ -32,19 +32,16 @@ class BaseGraphInterfaceTest:
 
     class BaseGraphInterfaceTestCases(unittest.TestCase):
 
-        """ Unit tests for NetworkxGraph """
+        """ Unit tests for interfaces to graph libraries """
 
         graph = None
 
+        nodes = range(7)
         edges = [
             (0, 1), (0, 2), (0, 3),
             (3, 6), (4, 5), (4, 6),
             (5, 6)
         ]
-
-        @property
-        def n_nodes(self):
-            return 1 + max(it.chain.from_iterable(self.edges))
 
         def test_get_nodes(self):
             nodes = self.graph.get_nodes()
@@ -114,15 +111,21 @@ class BaseGraphInterfaceTest:
 
 class TestNetworkxInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
-    def setUp(self):
-        G = nx.Graph(self.edges)
-        self.graph = interface.NetworkxInterface(G)
+    """ Unit tests for Networkx interface """
+
+    @classmethod
+    def setUpClass(cls):
+        G = nx.Graph(cls.edges)
+        cls.graph = interface.NetworkxInterface(G)
 
 
 class TestIgraphInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
-    def setUp(self):
+    """ Unit tests for Igraph interface """
+
+    @classmethod
+    def setUpClass(cls):
         G = ig.Graph()
-        G.add_vertices(self.n_nodes)
-        G.add_edges(self.edges)
-        self.graph = interface.IgraphInterface(G)
+        G.add_vertices(len(cls.nodes))
+        G.add_edges(cls.edges)
+        cls.graph = interface.IgraphInterface(G)
