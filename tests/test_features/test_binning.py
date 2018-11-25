@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import pandas as pd
 
 from graphrole.features.binning import vertical_log_binning
 
@@ -8,7 +9,7 @@ from graphrole.features.binning import vertical_log_binning
 class TestVerticalLogBinning(unittest.TestCase):
 
     """ Unit tests for vertical_log_binning() """
-    
+
     def test_vertical_log_binning(self):
         table = {
             'empty': {
@@ -81,5 +82,11 @@ class TestVerticalLogBinning(unittest.TestCase):
 
         for test_name, test in table.items():
             frac = test.get('frac', 0.5)
-            result = vertical_log_binning(test['input'], frac=frac)
-            np.testing.assert_array_equal(result, test['expected'], test_name)
+            # test numpy array
+            numpy_array_result = vertical_log_binning(test['input'], frac=frac)
+            numpy_msg = f'{test_name} numpy array'
+            self.assertTrue(np.allclose(numpy_array_result, test['expected']), numpy_msg)
+            # test pandas series
+            pandas_series_result = vertical_log_binning(pd.Series(test['input']), frac=frac)
+            pandas_msg = f'{test_name} pandas series'
+            self.assertTrue(np.allclose(pandas_series_result, test['expected']), pandas_msg)
