@@ -7,6 +7,7 @@ import pandas as pd
 from graphrole.features.binning import vertical_log_binning
 from graphrole.features.recursive import RecursiveFeatureExtractor
 
+np.random.seed(0)
 
 # pylint: disable=W0212
 
@@ -67,7 +68,7 @@ class TestRecursiveFeatureExtractor(unittest.TestCase):
             features_gen1.sort_index(axis=1),
             pd.DataFrame(expected_features_gen1).sort_index(axis=1)
         ))
-    
+
     def test__update(self):
         self.rfe._feature_group_thresh = -1  # has the effect of disabling pruning
         # seed with existing features
