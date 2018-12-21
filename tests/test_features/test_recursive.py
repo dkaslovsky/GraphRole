@@ -314,3 +314,37 @@ class TestRecursiveFeatureExtractorIgraph(BaseRecursiveFeatureExtractorTest.Test
         G.add_edges(cls.edges)
         cls.G = G
         cls.G_empty = ig.Graph()
+
+
+class TestWithDanglingNode(unittest.TestCase):
+
+    """ Unit tests for RecursiveFeatureExtractor when graph has dangling nodes """
+
+    def setUp(self):
+        # build graph with dangling nodes
+        self.nodes = ['a', 'b', 'c', 'd']
+        self.edge = ('a', 'c')
+        self.G = nx.Graph()
+        self.G.add_nodes_from(self.nodes)
+        self.G.add_edge(*self.edge)
+        self.rfe = RecursiveFeatureExtractor(self.G)
+    
+    def test_e2e_with_dangling_nodes(self):
+        features = self.rfe.extract_features()
+        # test that all nodes are present in feature dataframe
+        self.assertListEqual(features.index.tolist(), self.nodes)
+        # test that no features are null/nan
+        self.assertTrue(all(features.notnull()))
+    
+    def test_internal_with_dangling_nodes(self):
+        # manually simulate one generation
+        next_features0 = self.rfe._get_next_features()
+        self.rfe._features = next_features0
+        self.rfe.generation_dict[self.rfe.generation_count] = next_features0.columns
+        self.rfe.generation_count += 1
+        # get next features
+        next_features1 = self.rfe._get_next_features()
+        # test that dangling nodes did not generate features
+        self.assertListEqual(next_features1.index.tolist(), list(self.edge))
+        # test that features are not null/nan
+        self.assertTrue(all(next_features1.notnull()))
