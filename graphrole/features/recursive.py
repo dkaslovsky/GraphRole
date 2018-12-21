@@ -106,7 +106,8 @@ class RecursiveFeatureExtractor:
             return self.graph.get_neighborhood_features()
 
         # get nodes neighbors and aggregate their previous generation features
-        prev_features = self.generation_dict[self.generation_count - 1]
+        prev_gen = self.generation_count - 1
+        prev_features = self.generation_dict[prev_gen].intersection(self._features.columns)
         features = {
             node: (
                 self._features
@@ -114,6 +115,8 @@ class RecursiveFeatureExtractor:
                 .reindex(index=self.graph.get_neighbors(node), columns=prev_features)
                 # aggregate
                 .agg(self.aggs)
+                # fill nans that result from dangling nodes with 0
+                .fillna(0)
                 # store new aggregations as dict
                 .pipe(self._aggregated_df_to_dict)
             )
@@ -189,8 +192,12 @@ class RecursiveFeatureExtractor:
         :param features: DataFrame of features to be added
         """
         binned_features = features.apply(vertical_log_binning)
-        self._features = pd.concat([self._features, features], axis=1)
-        self._binned_features = pd.concat([self._binned_features, binned_features], axis=1)
+        self._features = pd.concat(
+            [self._features, features], axis=1, sort=True
+        )
+        self._binned_features = pd.concat(
+            [self._binned_features, binned_features], axis=1, sort=True
+        )
         self.generation_dict[self.generation_count] = set(features.columns)
     
     def _drop_features(self, feature_names: Iterable[str]) -> None:
