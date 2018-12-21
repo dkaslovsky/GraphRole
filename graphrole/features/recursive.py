@@ -106,8 +106,9 @@ class RecursiveFeatureExtractor:
             return self.graph.get_neighborhood_features()
 
         # get nodes neighbors and aggregate their previous generation features
-        prev_gen = self.generation_count - 1
-        prev_features = self.generation_dict[prev_gen].intersection(self._features.columns)
+        prev_features = self.generation_dict[self.generation_count - 1]
+        # take intersection with remaining features to avoid aggregated a removed/pruned feature
+        prev_features = prev_features.intersection(self._features.columns)
         features = {
             node: (
                 self._features
