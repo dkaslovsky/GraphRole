@@ -24,7 +24,8 @@ class RecursiveFeatureExtractor:
         pd.DataFrame.mean,
     ]
 
-    def __init__(self,
+    def __init__(
+        self,
         G: interface.GraphLibInstance,
         max_generations: int = 10,
         aggs: Optional[List] = None
@@ -73,8 +74,12 @@ class RecursiveFeatureExtractor:
         """
         Perform recursive feature extraction to return DataFrame of features
         """
+        # return already calculated features if stored in state
+        if self._final_features:
+            return self._finalize_features()
+
         for generation in range(self.max_generations):
-            
+
             self.generation_count = generation
             self._feature_group_thresh = generation
 
@@ -87,7 +92,7 @@ class RecursiveFeatureExtractor:
             )
             if not retained_features:
                 return self._finalize_features()
-   
+
         return self._finalize_features()
 
     def _finalize_features(self) -> DataFrameLike:
@@ -155,7 +160,7 @@ class RecursiveFeatureExtractor:
             to_drop = group - {oldest}
             features_to_drop.extend(to_drop)
         self._drop_features(features_to_drop)
-    
+
     def _group_features(self) -> Iterator[Set[interface.Node]]:
         """
         Group features according to connected components of feature graph induced
@@ -200,7 +205,7 @@ class RecursiveFeatureExtractor:
             [self._binned_features, binned_features], axis=1, sort=True
         )
         self.generation_dict[self.generation_count] = set(features.columns)
-    
+
     def _drop_features(self, feature_names: Iterable[str]) -> None:
         """
         Drop feature_names from feature and binned feature DataFrames
