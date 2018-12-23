@@ -137,7 +137,7 @@ class BaseRecursiveFeatureExtractorTest:
             feature_names = ['a', 'b', 'c', 'd']
             binned_features = np.concatenate(features, axis=1)
             self.rfe._binned_features = pd.DataFrame(binned_features, columns=feature_names)
-            
+
             for test_name, test in table.items():
                 self.rfe._feature_group_thresh = test['dist_thresh']
                 groups = self.rfe._group_features()
@@ -290,6 +290,11 @@ class BaseRecursiveFeatureExtractorTest:
             # test
             final_features = self.rfe._finalize_features()
             self.assertTrue(np.allclose(final_features, expected_final_features))
+
+        def test_extract_features_back_to_back(self):
+            features1 = self.rfe.extract_features()
+            features2 = self.rfe.extract_features()
+            pd.testing.assert_frame_equal(features1, features2)
 
 
 class TestRecursiveFeatureExtractorNetworkx(BaseRecursiveFeatureExtractorTest.TestCases):
