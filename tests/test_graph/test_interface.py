@@ -104,9 +104,9 @@ class BaseGraphInterfaceTest:
                     }
                 ).rename('external_edges')
             ]
-            expected_features = pd.concat(features, axis=1)
+            expected_features = pd.concat(features, axis=1).rename_axis('node', axis=0)
             result_features = self.graph.get_neighborhood_features()
-            self.assertTrue(np.allclose(result_features, expected_features))
+            pd.testing.assert_frame_equal(result_features, expected_features)
 
 
 class TestNetworkxInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):

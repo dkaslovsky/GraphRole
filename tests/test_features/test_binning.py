@@ -85,8 +85,16 @@ class TestVerticalLogBinning(unittest.TestCase):
             # test numpy array
             numpy_array_result = vertical_log_binning(test['input'], frac=frac)
             numpy_msg = f'{test_name} numpy array'
-            self.assertTrue(np.allclose(numpy_array_result, test['expected']), numpy_msg)
+            np.testing.assert_array_equal(
+                numpy_array_result,
+                test['expected'],
+                err_msg=numpy_msg
+            )
             # test pandas series
             pandas_series_result = vertical_log_binning(pd.Series(test['input']), frac=frac)
             pandas_msg = f'{test_name} pandas series'
-            self.assertTrue(np.allclose(pandas_series_result, test['expected']), pandas_msg)
+            np.testing.assert_array_almost_equal(
+                pandas_series_result,
+                test['expected'],
+                err_msg=pandas_msg
+            )
