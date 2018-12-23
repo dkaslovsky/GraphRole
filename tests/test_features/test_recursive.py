@@ -51,7 +51,12 @@ class BaseRecursiveFeatureExtractorTest:
                 'internal_edges': {'a': 2, 'b': 1, 'c': 2, 'd': 1},
                 'external_edges': {'a': 1, 'b': 1, 'c': 1, 'd': 1}
             }
-            self.assertTrue(np.allclose(features_gen0, pd.DataFrame(expected_features_gen0)))
+            # some graph interfaces do not support string node names so we will test
+            # the values of the feature DataFrames and intentionally ignore the index
+            self.assertTrue(np.allclose(
+                features_gen0.sort_index(axis=1).sort_index(axis=0).values, 
+                pd.DataFrame(expected_features_gen0).sort_index(axis=1).sort_index(axis=0).values
+            ))
 
             # generation > 0
             self.rfe.generation_count = 1
@@ -66,9 +71,11 @@ class BaseRecursiveFeatureExtractorTest:
                 'degree(mean)':         {'a': 1.5, 'b': 2.0, 'c': 1.5, 'd': 2.0},
                 'internal_edges(mean)': {'a': 1.5, 'b': 2.0, 'c': 1.5, 'd': 2.0}
             }
+            # some graph interfaces do not support string node names so we will test
+            # the values of the feature DataFrames and intentionally ignore the index
             self.assertTrue(np.allclose(
-                features_gen1.sort_index(axis=1),
-                pd.DataFrame(expected_features_gen1).sort_index(axis=1)
+                features_gen1.sort_index(axis=1).sort_index(axis=0).values,
+                pd.DataFrame(expected_features_gen1).sort_index(axis=1).sort_index(axis=0).values
             ))
 
         def test__update(self):
@@ -92,7 +99,7 @@ class BaseRecursiveFeatureExtractorTest:
             expected_new_final_features = new_features[['a', 'b']]
             expected_new_final_feature_names = \
                 set(existing_features.columns).union(set(new_features.columns))
-            self.assertTrue(np.allclose(self.rfe._final_features[-1], expected_new_final_features))
+            pd.testing.assert_frame_equal(self.rfe._final_features[-1], expected_new_final_features)
             self.assertSetEqual(self.rfe._final_features_names, expected_new_final_feature_names)
 
         def test__prune_features(self):
@@ -188,8 +195,8 @@ class BaseRecursiveFeatureExtractorTest:
             # add features
             self.rfe._add_features(features)
             # test features, binned_features, and generation_dict
-            self.assertTrue(np.allclose(self.rfe._features, features))
-            self.assertTrue(np.allclose(self.rfe._binned_features, binned_features))
+            pd.testing.assert_frame_equal(self.rfe._features, features)
+            pd.testing.assert_frame_equal(self.rfe._binned_features, binned_features)
             self.assertDictEqual(self.rfe.generation_dict, expected_generation_dict)
 
         def test__drop_features(self):
@@ -289,7 +296,7 @@ class BaseRecursiveFeatureExtractorTest:
             ]
             # test
             final_features = self.rfe._finalize_features()
-            self.assertTrue(np.allclose(final_features, expected_final_features))
+            pd.testing.assert_frame_equal(final_features, expected_final_features)
 
         def test_extract_features_back_to_back(self):
             features1 = self.rfe.extract_features()
@@ -333,14 +340,14 @@ class TestWithDanglingNode(unittest.TestCase):
         self.G.add_nodes_from(self.nodes)
         self.G.add_edge(*self.edge)
         self.rfe = RecursiveFeatureExtractor(self.G)
-    
+
     def test_e2e_with_dangling_nodes(self):
         features = self.rfe.extract_features()
         # test that all nodes are present in feature dataframe
         self.assertListEqual(features.index.tolist(), self.nodes)
         # test that no features are null/nan
         self.assertTrue(all(features.notnull()))
-    
+
     def test_internal_with_dangling_nodes(self):
         # manually simulate one generation
         next_features0 = self.rfe._get_next_features()
