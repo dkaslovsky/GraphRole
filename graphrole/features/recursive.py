@@ -56,12 +56,8 @@ class RecursiveFeatureExtractor:
         # variable for clarity
         self._feature_group_thresh = 0
         
-        # pd.DataFrame holding current features and their binned counterparts;
-        # note that we could recompute binned_features at each generation rather
-        # than store them in an instance variable, but this potential memory
-        # optimization is not yet needed
-        self._features = None            # type: Optional[DataFrameLike]
-        self._binned_features = None     # type: Optional[DataFrameLike]
+        # pd.DataFrame holding current
+        self._features = None     # type: Optional[DataFrameLike]
 
         # list of pd.DataFrames to be concatenated representing the features retained
         # at each generation to be emitted as the final extracted features
@@ -87,7 +83,9 @@ class RecursiveFeatureExtractor:
             self._update(next_features)
 
             # stop if a recursive iteration results in no features retained
-            if not self._subset_generation_features(self._features.columns, generation):
+            cur_gen_features = self.generation_dict[generation]
+            retained_features = cur_gen_features.intersection(self._features.columns)
+            if not retained_features:
                 return self._finalize_features()
 
         return self._finalize_features()
@@ -109,8 +107,9 @@ class RecursiveFeatureExtractor:
 
         # get nodes neighbors and aggregate their previous generation features, taking
         # intersection with remaining features to avoid aggregated a removed/pruned feature
-        prev_gen = self.generation_count - 1
-        prev_features = self._subset_generation_features(self._features.columns, prev_gen)
+        prev_features = self.generation_dict[self.generation_count - 1]
+        prev_features = prev_features.intersection(self._features.columns)
+
         features = {
             node: (
                 self._features
@@ -134,9 +133,14 @@ class RecursiveFeatureExtractor:
         :param features: candidate features from current recursive generation
         """
         self._add_features(features)
-        self._prune_features()
-        # save features that remain after pruning
-        # and that have not previously been saved
+
+        # prune redundant features
+        pruner = FeaturePruner(self.generation_dict, self._feature_group_thresh)
+        features_to_prune = pruner.prune_features(self._features)
+        self._drop_features(features_to_prune)
+
+        # save features that remain after pruning and that
+        # have not previously been saved as final features
         new_features = (
             self._features.columns
             .difference(self._final_features_names)
@@ -144,63 +148,12 @@ class RecursiveFeatureExtractor:
         self._final_features.append(self._features[new_features])
         self._final_features_names.update(new_features)
 
-    def _prune_features(self) -> None:
-        """
-        Eliminate redundant features from current iteration by identifying
-        features in connected components of a feature graph and replace components
-        with oldest (i.e., earliest generation) member feature
-        """
-        features_to_drop = []
-        groups = self._group_features()
-        for group in groups:
-            oldest = self._get_oldest_feature(group)
-            to_drop = group - {oldest}
-            features_to_drop.extend(to_drop)
-        self._drop_features(features_to_drop)
-
-    def _group_features(self) -> Iterator[Set[interface.Node]]:
-        """
-        Group features according to connected components of feature graph induced
-        by pairwise distances below distance threshold
-        """
-        # get condensed vector of pairwise distances measuring
-        # max_i |u[i] - v[i]| for features u, v
-        dists = pdist(self._binned_features.T, metric='chebychev')
-        # construct feature graph by connecting features within
-        # dist_thresh of each other and return connected components
-        nodes = self._binned_features.columns
-        all_edges = it.combinations(nodes, 2)
-        edges = it.compress(all_edges, dists <= self._feature_group_thresh)
-        feature_graph = AdjacencyDictGraph(edges)
-        groups = feature_graph.get_connected_components()
-        return groups
-
-    def _get_oldest_feature(self, feature_names: Set[T]) -> T:
-        """
-        Return the feature from set of feature names that was generated
-        in the earliest generation; tie between features from same iteration
-        are broken by sorted named order
-        :param feature_names: set of feature names from which to find oldest
-        """ 
-        for gen in range(self.generation_count):
-            cur_gen = self._subset_generation_features(feature_names, gen)
-            if cur_gen:
-                return self._set_getitem(cur_gen)
-        return self._set_getitem(feature_names)
-
     def _add_features(self, features: DataFrameLike) -> None:
         """
-        Add features to self.features DataFrame; also update corresponding
-        binned_features DataFrame and feature generation_dict
+        Add features to self.features DataFrame; also update generation_dict
         :param features: DataFrame of features to be added
         """
-        binned_features = features.apply(vertical_log_binning)
-        self._features = pd.concat(
-            [self._features, features], axis=1, sort=True
-        )
-        self._binned_features = pd.concat(
-            [self._binned_features, binned_features], axis=1, sort=True
-        )
+        self._features = pd.concat([self._features, features], axis=1, sort=True)
         self.generation_dict[self.generation_count] = set(features.columns)
 
     def _drop_features(self, feature_names: Iterable[str]) -> None:
@@ -209,19 +162,6 @@ class RecursiveFeatureExtractor:
         :param feature_names: iterable of feature names to be dropped
         """
         self._features.drop(feature_names, axis=1, inplace=True)
-        self._binned_features.drop(feature_names, axis=1, inplace=True)
-
-    def _subset_generation_features(self, feature_set: Set[T], generation: int) -> Set[T]:
-        """
-        Return set of feature names from specified generation also appearing in feature_set
-        :param: feature_set: set of feature names
-        :param generation: int specifying generation
-        """
-        try:
-            generation_features = self.generation_dict[generation]
-        except KeyError:
-            return set()
-        return generation_features.intersection(feature_set)
 
     @staticmethod
     def _aggregated_df_to_dict(agg_df: DataFrameLike) -> Dict[str, float]:
@@ -239,6 +179,72 @@ class RecursiveFeatureExtractor:
             for idx, row in agg_dicts.items()
             for key, val in row.items()
         }
+
+
+# update tests
+# move to binning.py (rename?)
+# update docstrings and types
+# comment on binned features
+class FeaturePruner:
+
+    """
+    """
+
+    def __init__(self, generation_dict: Dict[int, Set[str]], feature_group_thresh: int) -> None:
+        """
+        """
+        self._generation_dict = generation_dict
+        self._feature_group_thresh = feature_group_thresh
+
+    def prune_features(self, features: DataFrameLike) -> List[str]:
+        """
+        Eliminate redundant features from current iteration by identifying
+        features in connected components of a feature graph and replace components
+        with oldest (i.e., earliest generation) member feature
+        :param features: DataFrame of features
+        """
+        features_to_drop = []
+        groups = self._group_features(features)
+        for group in groups:
+            oldest = self._get_oldest_feature(group)
+            to_drop = group - {oldest}
+            features_to_drop.extend(to_drop)
+        return features_to_drop
+
+    def _group_features(self, features: DataFrameLike) -> Iterator[Set[str]]:
+        """
+        Group features according to connected components of feature graph induced
+        by pairwise distances below distance threshold
+        :param features: DataFrame of features
+        """
+        # apply binning to features
+        binned_features = features.apply(vertical_log_binning)
+        # get condensed vector of pairwise distances measuring
+        # max_i |u[i] - v[i]| for features u, v
+        dists = pdist(binned_features.T, metric='chebychev')
+        # construct feature graph by connecting features within
+        # dist_thresh of each other and return connected components
+        nodes = binned_features.columns
+        all_edges = it.combinations(nodes, 2)
+        edges = it.compress(all_edges, dists <= self._feature_group_thresh)
+        feature_graph = AdjacencyDictGraph(edges)
+        groups = feature_graph.get_connected_components()
+        return groups
+    
+    def _get_oldest_feature(self, feature_names: Set[T]) -> T:
+        """
+        Return the feature from set of feature names that was generated
+        in the earliest generation; tie between features from same iteration
+        are broken by sorted named order
+        :param feature_names: set of feature names from which to find oldest
+        """ 
+
+        for gen in range(len(self._generation_dict)):
+            generation_features = self._generation_dict[gen]
+            cur_features = feature_names.intersection(generation_features)
+            if cur_features:
+                return self._set_getitem(cur_features)
+        return self._set_getitem(feature_names)
 
     @staticmethod
     def _set_getitem(s: Set[T]) -> T:
