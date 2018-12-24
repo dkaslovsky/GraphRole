@@ -297,6 +297,45 @@ class BaseRecursiveFeatureExtractorTest:
             # test
             final_features = self.rfe._finalize_features()
             pd.testing.assert_frame_equal(final_features, expected_final_features)
+        
+        def test__subset_generation_features(self):
+            self.rfe.generation_dict = {
+                0: {'a', 'b'},
+                1: {'c'}
+            }
+            table = {
+                'generation not found': {
+                    'generation': 2,
+                    'feature_set': {'a'},
+                    'expected': set()
+                },
+                'empty subset': {
+                    'generation': 0,
+                    'feature_set': {'x'},
+                    'expected': set()
+                },
+                'subset': {
+                    'generation': 0,
+                    'feature_set': {'a'},
+                    'expected': {'a'}
+                },
+                'full subset': {
+                    'generation': 0,
+                    'feature_set': {'a', 'b'},
+                    'expected': {'a', 'b'}
+                },
+                'more features than in generation': {
+                    'generation': 1,
+                    'feature_set': {'a', 'b', 'c'},
+                    'expected': {'c'}
+                },
+            }
+            
+            for test_name, test in table.items():
+                feature_set = test['feature_set']
+                generation = test['generation']
+                subset = self.rfe._subset_generation_features(feature_set, generation)
+                self.assertSetEqual(subset, test['expected'], test_name)
 
         def test_extract_features_back_to_back(self):
             features1 = self.rfe.extract_features()

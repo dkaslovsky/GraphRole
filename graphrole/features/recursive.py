@@ -87,10 +87,7 @@ class RecursiveFeatureExtractor:
             self._update(next_features)
 
             # stop if a recursive iteration results in no features retained
-            retained_features = (
-                self.generation_dict[generation].intersection(self._features.columns)
-            )
-            if not retained_features:
+            if not self._subset_generation_features(self._features.columns, generation):
                 return self._finalize_features()
 
         return self._finalize_features()
@@ -110,10 +107,10 @@ class RecursiveFeatureExtractor:
         if self.generation_count == 0:
             return self.graph.get_neighborhood_features()
 
-        # get nodes neighbors and aggregate their previous generation features
-        prev_features = self.generation_dict[self.generation_count - 1]
-        # take intersection with remaining features to avoid aggregated a removed/pruned feature
-        prev_features = prev_features.intersection(self._features.columns)
+        # get nodes neighbors and aggregate their previous generation features, taking
+        # intersection with remaining features to avoid aggregated a removed/pruned feature
+        prev_gen = self.generation_count - 1
+        prev_features = self._subset_generation_features(self._features.columns, prev_gen)
         features = {
             node: (
                 self._features
@@ -186,7 +183,7 @@ class RecursiveFeatureExtractor:
         :param feature_names: set of feature names from which to find oldest
         """ 
         for gen in range(self.generation_count):
-            cur_gen = feature_names.intersection(self.generation_dict[gen])
+            cur_gen = self._subset_generation_features(feature_names, gen)
             if cur_gen:
                 return self._set_getitem(cur_gen)
         return self._set_getitem(feature_names)
@@ -213,6 +210,18 @@ class RecursiveFeatureExtractor:
         """
         self._features.drop(feature_names, axis=1, inplace=True)
         self._binned_features.drop(feature_names, axis=1, inplace=True)
+
+    def _subset_generation_features(self, feature_set: Set[T], generation: int) -> Set[T]:
+        """
+        Return set of feature names from specified generation also appearing in feature_set
+        :param: feature_set: set of feature names
+        :param generation: int specifying generation
+        """
+        try:
+            generation_features = self.generation_dict[generation]
+        except KeyError:
+            return set()
+        return generation_features.intersection(feature_set)
 
     @staticmethod
     def _aggregated_df_to_dict(agg_df: DataFrameLike) -> Dict[str, float]:
