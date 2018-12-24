@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from graphrole.features.binning import vertical_log_binning
-from graphrole.features.recursive import RecursiveFeatureExtractor
+from graphrole.features.recursive import FeaturePruner, RecursiveFeatureExtractor
 
 np.random.seed(0)
 
@@ -102,82 +102,6 @@ class BaseRecursiveFeatureExtractorTest:
             pd.testing.assert_frame_equal(self.rfe._final_features[-1], expected_new_final_features)
             self.assertSetEqual(self.rfe._final_features_names, expected_new_final_feature_names)
 
-        def test__prune_features(self):
-            # seed with 2 generations of features
-            for _ in range(2):
-                features = self.rfe._get_next_features()
-                self.rfe._add_features(features)
-                self.rfe.generation_count += 1
-            # prune features
-            self.rfe._prune_features()
-            # test remaining features
-            expected_remaining_features = {'degree', 'external_edges', 'degree(mean)'}
-            self.assertSetEqual(set(self.rfe._features.columns), expected_remaining_features)
-            self.assertSetEqual(set(self.rfe._binned_features.columns), expected_remaining_features)
-
-        def test__group_features(self):
-            table = {
-                'dist_thresh = 0 -> 1 component': {
-                    'dist_thresh': 0,
-                    'expected': [{'a', 'b'}]
-                },
-                'dist_thresh = 1 -> 2 components': {
-                    'dist_thresh': 1,
-                    'expected': [{'a', 'b'}, {'c', 'd'}]
-                },
-                'dist_thresh = 2 -> all connected': {
-                    'dist_thresh': 2,
-                    'expected': [{'a', 'b', 'c', 'd'}]
-                },
-                'dist_thresh = -1 -> empty list': {
-                    'dist_thresh': -1,
-                    'expected': []
-                },
-            }
-
-            features = [
-                np.array([[1, 2, 3]]).T,
-                np.array([[1, 2, 3]]).T,
-                np.array([[2, 1, 1]]).T,
-                np.array([[1, 1, 1]]).T
-            ]
-            feature_names = ['a', 'b', 'c', 'd']
-            binned_features = np.concatenate(features, axis=1)
-            self.rfe._binned_features = pd.DataFrame(binned_features, columns=feature_names)
-
-            for test_name, test in table.items():
-                self.rfe._feature_group_thresh = test['dist_thresh']
-                groups = self.rfe._group_features()
-                self.assertEqual(list(groups), test['expected'], test_name)
-
-        def test__get_oldest_feature(self):
-            self.rfe.generation_count = 2
-            self.rfe.generation_dict = {
-                0: {'b', 'a'},
-                1: {'c', 'd'}
-            }
-            table = {
-                'gen0': {
-                    'feature_names': {'a', 'c', 'f'},
-                    'expected': 'a'
-                },
-                'gen0 with tie': {
-                    'feature_names': {'a', 'b', 'f'},
-                    'expected': 'a'
-                },
-                'gen1 with features not in generation_dict': {
-                    'feature_names': {'x', 'c', 'f'},
-                    'expected': 'c'
-                },
-                'no gen1 or gen2 features as input': {
-                    'feature_names': {'y', 'x', 'z'},
-                    'expected': 'x'
-                }
-            }
-            for test_name, test in table.items():
-                oldest = self.rfe._get_oldest_feature(test['feature_names'])
-                self.assertEqual(oldest, test['expected'], test_name)
-
         def test__add_features(self):
             generation_count = 2
             # build feature dataframe
@@ -185,8 +109,6 @@ class BaseRecursiveFeatureExtractorTest:
             nodes = ['node1', 'node2']
             data = np.random.rand(len(nodes), len(feature_names))
             features = pd.DataFrame(data, columns=feature_names, index=nodes)
-            # get associated binned_features
-            binned_features = features.apply(vertical_log_binning)
             # generation dict should only have a key for generation_count
             expected_generation_dict = {generation_count: set(features.columns)}
 
@@ -194,9 +116,8 @@ class BaseRecursiveFeatureExtractorTest:
             self.rfe.generation_count = generation_count
             # add features
             self.rfe._add_features(features)
-            # test features, binned_features, and generation_dict
+            # test features and generation_dict
             pd.testing.assert_frame_equal(self.rfe._features, features)
-            pd.testing.assert_frame_equal(self.rfe._binned_features, binned_features)
             self.assertDictEqual(self.rfe.generation_dict, expected_generation_dict)
 
         def test__drop_features(self):
@@ -231,11 +152,6 @@ class BaseRecursiveFeatureExtractorTest:
                     set(test['expected']),
                     test_name
                 )
-                self.assertSetEqual(
-                    set(self.rfe._binned_features.columns),
-                    set(test['expected']),
-                    test_name
-                )
 
         def test__aggregated_df_to_dict(self):
             # dataframe
@@ -264,23 +180,6 @@ class BaseRecursiveFeatureExtractorTest:
             }
             self.assertDictEqual(agg_dict, expected_agg_dict)
 
-        def test__set_getitem(self):
-            table = {
-                'ints': {
-                    'input': {3, 2, 5, 6},
-                    'expected': 2
-                },
-                'strings': {
-                    'input': {'d', 'b', 'a', 'c'},
-                    'expected': 'a'
-                }
-            }
-            n_trials = 10
-            for test_name, test in table.items():
-                for _ in range(n_trials):
-                    result = self.rfe._set_getitem(test['input'])
-                    self.assertEqual(result, test['expected'], test_name)
-
         def test__finalize_features(self):
             # construct expected result
             data = {
@@ -297,45 +196,6 @@ class BaseRecursiveFeatureExtractorTest:
             # test
             final_features = self.rfe._finalize_features()
             pd.testing.assert_frame_equal(final_features, expected_final_features)
-        
-        def test__subset_generation_features(self):
-            self.rfe.generation_dict = {
-                0: {'a', 'b'},
-                1: {'c'}
-            }
-            table = {
-                'generation not found': {
-                    'generation': 2,
-                    'feature_set': {'a'},
-                    'expected': set()
-                },
-                'empty subset': {
-                    'generation': 0,
-                    'feature_set': {'x'},
-                    'expected': set()
-                },
-                'subset': {
-                    'generation': 0,
-                    'feature_set': {'a'},
-                    'expected': {'a'}
-                },
-                'full subset': {
-                    'generation': 0,
-                    'feature_set': {'a', 'b'},
-                    'expected': {'a', 'b'}
-                },
-                'more features than in generation': {
-                    'generation': 1,
-                    'feature_set': {'a', 'b', 'c'},
-                    'expected': {'c'}
-                },
-            }
-            
-            for test_name, test in table.items():
-                feature_set = test['feature_set']
-                generation = test['generation']
-                subset = self.rfe._subset_generation_features(feature_set, generation)
-                self.assertSetEqual(subset, test['expected'], test_name)
 
         def test_extract_features_back_to_back(self):
             features1 = self.rfe.extract_features()
@@ -399,3 +259,108 @@ class TestWithDanglingNode(unittest.TestCase):
         self.assertListEqual(next_features1.index.tolist(), list(self.edge))
         # test that features are not null/nan
         self.assertTrue(all(next_features1.notnull()))
+
+
+
+
+# better prune test
+# do we always prune every round?  What if all disconnected?
+
+class TestFeaturePruner(unittest.TestCase):
+
+    def setUp(self):
+        generation_dict = {
+            0: {'b', 'a'},
+            1: {'c', 'd'}
+        }
+        feature_group_thresh = 1
+        self.pruner = FeaturePruner(generation_dict, feature_group_thresh)
+
+    def test_prune_features(self):
+        data = [
+            np.array([[1, 2, 3]]).T,
+            np.array([[1, 2, 3]]).T,
+            np.array([[2, 1, 1]]).T,
+            np.array([[1, 1, 1]]).T
+        ]
+        feature_data = np.concatenate(data, axis=1)
+        feature_names = ['a', 'b', 'c', 'd']
+        features = pd.DataFrame(feature_data, columns=feature_names)
+
+        features_to_drop = self.pruner.prune_features(features)
+        expected_features_to_drop = ['b', 'd']
+        self.assertListEqual(features_to_drop, expected_features_to_drop)
+
+    def test__group_features(self):
+        data = [
+            np.array([[1, 2, 3]]).T,
+            np.array([[1, 2, 3]]).T,
+            np.array([[2, 1, 1]]).T,
+            np.array([[1, 1, 1]]).T
+        ]
+        feature_data = np.concatenate(data, axis=1)
+        feature_names = ['a', 'b', 'c', 'd']
+        features = pd.DataFrame(feature_data, columns=feature_names)
+
+        table = {
+            'dist_thresh = 0 -> 1 component': {
+                'dist_thresh': 0,
+                'expected': [{'a', 'b'}]
+            },
+            'dist_thresh = 1 -> 2 components': {
+                'dist_thresh': 1,
+                'expected': [{'a', 'b'}, {'c', 'd'}]
+            },
+            'dist_thresh = 2 -> all connected': {
+                'dist_thresh': 2,
+                'expected': [{'a', 'b', 'c', 'd'}]
+            },
+            'dist_thresh = -1 -> empty list': {
+                'dist_thresh': -1,
+                'expected': []
+            },
+        }
+        for test_name, test in table.items():
+            self.pruner._feature_group_thresh = test['dist_thresh']
+            groups = self.pruner._group_features(features)
+            self.assertListEqual(list(groups), test['expected'], test_name)
+
+    def test__get_oldest_feature(self):
+        table = {
+            'gen0': {
+                'feature_names': {'a', 'c', 'f'},
+                'expected': 'a'
+            },
+            'gen0 with tie': {
+                'feature_names': {'a', 'b', 'f'},
+                'expected': 'a'
+            },
+            'gen1 with features not in generation_dict': {
+                'feature_names': {'x', 'c', 'f'},
+                'expected': 'c'
+            },
+            'no gen1 or gen2 features as input': {
+                'feature_names': {'y', 'x', 'z'},
+                'expected': 'x'
+            }
+        }
+        for test_name, test in table.items():
+            oldest = self.pruner._get_oldest_feature(test['feature_names'])
+            self.assertEqual(oldest, test['expected'], test_name)
+    
+    def test__set_getitem(self):
+        table = {
+            'ints': {
+                'input': {3, 2, 5, 6},
+                'expected': 2
+            },
+            'strings': {
+                'input': {'d', 'b', 'a', 'c'},
+                'expected': 'a'
+            }
+        }
+        n_trials = 10
+        for test_name, test in table.items():
+            for _ in range(n_trials):
+                result = self.pruner._set_getitem(test['input'])
+                self.assertEqual(result, test['expected'], test_name)
