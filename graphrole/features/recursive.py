@@ -206,6 +206,9 @@ class FeaturePruner:
         features_to_drop = []
         groups = self._group_features(features)
         for group in groups:
+            # isolated feature should not be pruned
+            if len(group) == 1:
+                continue
             oldest = self._get_oldest_feature(group)
             to_drop = group - {oldest}
             features_to_drop.extend(to_drop)

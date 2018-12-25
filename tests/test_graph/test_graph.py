@@ -24,6 +24,11 @@ class TestAdjacencyDictGraph(unittest.TestCase):
             'adjacency':    {0: {7, 8}, 1: {3}, 2: {6, 8}, 3: {1}, 4: {6},
                              5: {8}, 6: {2, 4}, 7: {0}, 8: {0, 2, 5}},
             'components':   [{0, 2, 4, 5, 6, 7, 8}, {1, 3}]
+        },
+        'dangling': {
+            'edges':        [(0, 0), (1, 2)],
+            'adjacency':    {0: {0}, 1: {2}, 2: {1}},
+            'components':   [{0}, {1, 2}]
         }
     }
 
