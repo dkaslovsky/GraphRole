@@ -5,8 +5,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from graphrole.features.binning import vertical_log_binning
-from graphrole.features.recursive import FeaturePruner, RecursiveFeatureExtractor
+from graphrole.features.recursive import RecursiveFeatureExtractor
 
 np.random.seed(0)
 
@@ -259,108 +258,3 @@ class TestWithDanglingNode(unittest.TestCase):
         self.assertListEqual(next_features1.index.tolist(), list(self.edge))
         # test that features are not null/nan
         self.assertTrue(all(next_features1.notnull()))
-
-
-
-
-# better prune test
-# do we always prune every round?  What if all disconnected?
-
-class TestFeaturePruner(unittest.TestCase):
-
-    def setUp(self):
-        generation_dict = {
-            0: {'b', 'a'},
-            1: {'c', 'd'}
-        }
-        feature_group_thresh = 1
-        self.pruner = FeaturePruner(generation_dict, feature_group_thresh)
-
-    def test_prune_features(self):
-        data = [
-            np.array([[1, 2, 3]]).T,
-            np.array([[1, 2, 3]]).T,
-            np.array([[2, 1, 1]]).T,
-            np.array([[1, 1, 1]]).T
-        ]
-        feature_data = np.concatenate(data, axis=1)
-        feature_names = ['a', 'b', 'c', 'd']
-        features = pd.DataFrame(feature_data, columns=feature_names)
-
-        features_to_drop = self.pruner.prune_features(features)
-        expected_features_to_drop = ['b', 'd']
-        self.assertListEqual(features_to_drop, expected_features_to_drop)
-
-    def test__group_features(self):
-        data = [
-            np.array([[1, 2, 3]]).T,
-            np.array([[1, 2, 3]]).T,
-            np.array([[2, 1, 1]]).T,
-            np.array([[1, 1, 1]]).T
-        ]
-        feature_data = np.concatenate(data, axis=1)
-        feature_names = ['a', 'b', 'c', 'd']
-        features = pd.DataFrame(feature_data, columns=feature_names)
-
-        table = {
-            'dist_thresh = 0 -> 1 component': {
-                'dist_thresh': 0,
-                'expected': [{'a', 'b'}]
-            },
-            'dist_thresh = 1 -> 2 components': {
-                'dist_thresh': 1,
-                'expected': [{'a', 'b'}, {'c', 'd'}]
-            },
-            'dist_thresh = 2 -> all connected': {
-                'dist_thresh': 2,
-                'expected': [{'a', 'b', 'c', 'd'}]
-            },
-            'dist_thresh = -1 -> empty list': {
-                'dist_thresh': -1,
-                'expected': []
-            },
-        }
-        for test_name, test in table.items():
-            self.pruner._feature_group_thresh = test['dist_thresh']
-            groups = self.pruner._group_features(features)
-            self.assertListEqual(list(groups), test['expected'], test_name)
-
-    def test__get_oldest_feature(self):
-        table = {
-            'gen0': {
-                'feature_names': {'a', 'c', 'f'},
-                'expected': 'a'
-            },
-            'gen0 with tie': {
-                'feature_names': {'a', 'b', 'f'},
-                'expected': 'a'
-            },
-            'gen1 with features not in generation_dict': {
-                'feature_names': {'x', 'c', 'f'},
-                'expected': 'c'
-            },
-            'no gen1 or gen2 features as input': {
-                'feature_names': {'y', 'x', 'z'},
-                'expected': 'x'
-            }
-        }
-        for test_name, test in table.items():
-            oldest = self.pruner._get_oldest_feature(test['feature_names'])
-            self.assertEqual(oldest, test['expected'], test_name)
-    
-    def test__set_getitem(self):
-        table = {
-            'ints': {
-                'input': {3, 2, 5, 6},
-                'expected': 2
-            },
-            'strings': {
-                'input': {'d', 'b', 'a', 'c'},
-                'expected': 'a'
-            }
-        }
-        n_trials = 10
-        for test_name, test in table.items():
-            for _ in range(n_trials):
-                result = self.pruner._set_getitem(test['input'])
-                self.assertEqual(result, test['expected'], test_name)

@@ -3,8 +3,9 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from graphrole.features.binning import vertical_log_binning
+from graphrole.features.binning import FeaturePruner, vertical_log_binning
 
+# pylint: disable=W0212
 
 class TestVerticalLogBinning(unittest.TestCase):
 
@@ -98,3 +99,124 @@ class TestVerticalLogBinning(unittest.TestCase):
                 test['expected'],
                 err_msg=pandas_msg
             )
+
+
+class TestFeaturePruner(unittest.TestCase):
+
+    """ Unit test for FeaturePruner """
+
+    def setUp(self):
+        generation_dict = {
+            0: {'b', 'a'},
+            1: {'c', 'd'}
+        }
+        feature_group_thresh = 1
+        self.pruner = FeaturePruner(generation_dict, feature_group_thresh)
+
+    def test_prune_features(self):
+        data = {
+            'a': [1, 2, 3, 10],
+            'b': [1, 2, 3, 1],
+            'c': [2, 1, 1, 4],
+            'd': [1, 1, 1, 1],
+            'e': [1, 1, 2, 0]
+        }
+        features = pd.DataFrame(data)
+
+        generation_dict = {
+            0: {'a', 'b', 'c'},
+            1: {'d', 'e'}
+        }
+        self.pruner._generation_dict = generation_dict
+
+        table = {
+            'no pruning': {
+                'feature_group_thresh': 0,
+                'expected_features_to_drop': []
+            },
+            'two groups': {
+                'feature_group_thresh': 1,
+                'expected_features_to_drop': ['c', 'd', 'e']
+            },
+            'one group': {
+                'feature_group_thresh': 2,
+                'expected_features_to_drop': ['b', 'c', 'd', 'e']
+            },
+        }
+        for test_name, test in table.items():
+            self.pruner._feature_group_thresh = test['feature_group_thresh']
+            expected = test['expected_features_to_drop']
+            features_to_drop = self.pruner.prune_features(features)
+            self.assertSetEqual(set(features_to_drop), set(expected), test_name)
+
+    def test__group_features(self):
+        data = {
+            'a': [1, 2, 3],
+            'b': [1, 2, 3],
+            'c': [2, 1, 1],
+            'd': [1, 1, 1]
+        }
+        features = pd.DataFrame(data)
+
+        table = {
+            'dist_thresh = 0 -> 1 component': {
+                'dist_thresh': 0,
+                'expected': [{'a', 'b'}]
+            },
+            'dist_thresh = 1 -> 2 components': {
+                'dist_thresh': 1,
+                'expected': [{'a', 'b'}, {'c', 'd'}]
+            },
+            'dist_thresh = 2 -> all connected': {
+                'dist_thresh': 2,
+                'expected': [{'a', 'b', 'c', 'd'}]
+            },
+            'dist_thresh = -1 -> empty list': {
+                'dist_thresh': -1,
+                'expected': []
+            },
+        }
+        for test_name, test in table.items():
+            self.pruner._feature_group_thresh = test['dist_thresh']
+            groups = self.pruner._group_features(features)
+            self.assertListEqual(list(groups), test['expected'], test_name)
+
+    def test__get_oldest_feature(self):
+        table = {
+            'gen0': {
+                'feature_names': {'a', 'c', 'f'},
+                'expected': 'a'
+            },
+            'gen0 with tie': {
+                'feature_names': {'a', 'b', 'f'},
+                'expected': 'a'
+            },
+            'gen1 with features not in generation_dict': {
+                'feature_names': {'x', 'c', 'f'},
+                'expected': 'c'
+            },
+            'no gen1 or gen2 features as input': {
+                'feature_names': {'y', 'x', 'z'},
+                'expected': 'x'
+            }
+        }
+        for test_name, test in table.items():
+            oldest = self.pruner._get_oldest_feature(test['feature_names'])
+            self.assertEqual(oldest, test['expected'], test_name)
+    
+    def test__set_getitem(self):
+        table = {
+            'ints': {
+                'input': {3, 2, 5, 6},
+                'expected': 2
+            },
+            'strings': {
+                'input': {'d', 'b', 'a', 'c'},
+                'expected': 'a'
+            }
+        }
+        n_trials = 10
+        for test_name, test in table.items():
+            for _ in range(n_trials):
+                result = self.pruner._set_getitem(test['input'])
+                self.assertEqual(result, test['expected'], test_name)
