@@ -13,7 +13,7 @@ class AdjacencyDictGraph:
 
     def __init__(self, edges: Iterable[Edge]) -> None:
         self.edges = edges
-        self._build_adjacency_dict()
+        self.adj_dict = self._build_adjacency_dict()
 
     def get_connected_components(self) -> Iterator[Set[Node]]:
         """
@@ -36,7 +36,7 @@ class AdjacencyDictGraph:
         for (node1, node2) in self.edges:
             adj[node1].add(node2)
             adj[node2].add(node1)
-        self.adj_dict = dict(adj)
+        return dict(adj)
 
     def _dfs(self, node: Node) -> Set[Node]:
         """
