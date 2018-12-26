@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from graphrole.features.binning import FeaturePruner, vertical_log_binning
+from graphrole.features.prune import FeaturePruner, vertical_log_binning
 
 # pylint: disable=W0212
 

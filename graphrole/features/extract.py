@@ -2,7 +2,7 @@ from typing import Dict, Iterable, List, Optional, TypeVar
 
 import pandas as pd
 
-from graphrole.features.binning import DataFrameLike, FeaturePruner
+from graphrole.features.prune import DataFrameLike, FeaturePruner
 from graphrole.graph import interface
 
 T = TypeVar('T', int, str)

@@ -4,7 +4,7 @@ import igraph as ig
 import networkx as nx
 import numpy as np
 
-from graphrole.features.recursive import RecursiveFeatureExtractor
+from graphrole.features.extract import RecursiveFeatureExtractor
 
 np.random.seed(0)
 

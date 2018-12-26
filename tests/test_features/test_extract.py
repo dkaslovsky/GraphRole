@@ -5,7 +5,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from graphrole.features.recursive import RecursiveFeatureExtractor
+from graphrole.features.extract import RecursiveFeatureExtractor
 
 np.random.seed(0)
 
