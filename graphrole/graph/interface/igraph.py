@@ -16,7 +16,7 @@ class IgraphInterface(BaseGraphInterface):
         :param G: igraph Graph
         """
         self.G = G
-    
+
     def get_neighborhood_features(self) -> pd.DataFrame:
         """
         Return neighborhood features (local + egonet) for each node in the graph

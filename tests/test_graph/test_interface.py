@@ -11,7 +11,7 @@ from graphrole.graph import interface
 class TestGetInterface(unittest.TestCase):
 
     """ Unit tests for get_interface() """
-    
+
     def test_get_interface(self):
         # test with object from supported library
         obj = nx.Graph()

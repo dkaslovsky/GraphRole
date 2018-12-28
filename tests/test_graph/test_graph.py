@@ -2,7 +2,7 @@ import unittest
 
 from graphrole.graph.graph import AdjacencyDictGraph
 
-# pylint: disable=W0212
+# pylint: disable=protected-access
 
 class TestAdjacencyDictGraph(unittest.TestCase):
 

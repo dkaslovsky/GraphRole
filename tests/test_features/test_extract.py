@@ -9,7 +9,7 @@ from graphrole.features.extract import RecursiveFeatureExtractor, as_frame
 
 np.random.seed(0)
 
-# pylint: disable=W0212
+# pylint: disable=protected-access
 
 class BaseRecursiveFeatureExtractorTest:
 
@@ -41,7 +41,7 @@ class BaseRecursiveFeatureExtractorTest:
             self.rfe = RecursiveFeatureExtractor(self.G_empty)
             features = self.rfe._get_next_features()
             self.assertTrue(features.empty)
-        
+
         def test__get_next_features(self):
             # generation 0
             features_gen0 = self.rfe._get_next_features()
@@ -53,7 +53,7 @@ class BaseRecursiveFeatureExtractorTest:
             # some graph interfaces do not support string node names so we will test
             # the values of the feature DataFrames and intentionally ignore the index
             self.assertTrue(np.allclose(
-                features_gen0.sort_index(axis=1).sort_index(axis=0).values, 
+                features_gen0.sort_index(axis=1).sort_index(axis=0).values,
                 pd.DataFrame(expected_features_gen0).sort_index(axis=1).sort_index(axis=0).values
             ))
 

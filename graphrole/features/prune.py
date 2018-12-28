@@ -25,7 +25,7 @@ def vertical_log_binning(arr: VectorLike, frac: float = 0.5) -> VectorLike:
 
     arr_len = len(arr)
     binned = np.zeros(arr_len, dtype=np.int)
-    
+
     # get sorted unique values and counts in arr
     arr_uniq, counts = np.unique(arr, return_counts=True)
     # convert to cumulative counts
@@ -69,7 +69,7 @@ class FeaturePruner:
         feature_group_thresh: int
     ) -> None:
         """
-        :param generation_dict: mapping of recursive generation number to 
+        :param generation_dict: mapping of recursive generation number to
         dict of {features: {node: values}}
         :param feature_group_thresh: distance threshold for grouping binned version of features
         """
