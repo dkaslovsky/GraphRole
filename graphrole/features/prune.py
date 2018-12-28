@@ -111,7 +111,7 @@ class FeaturePruner:
         feature_graph = AdjacencyDictGraph(edges)
         groups = feature_graph.get_connected_components()
         return groups
-    
+
     def _get_oldest_feature(self, feature_names: Set[T]) -> T:
         """
         Return the feature from set of feature names that was generated

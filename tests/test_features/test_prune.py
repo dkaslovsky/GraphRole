@@ -192,10 +192,10 @@ class TestFeaturePruner(unittest.TestCase):
                 'expected': 'a'
             },
             'gen1 with features not in generation_dict': {
-                'feature_names': {'x', 'c', 'f'},
+                'feature_names': {'x', 'c', 'f', 'aa'},
                 'expected': 'c'
             },
-            'no gen1 or gen2 features as input': {
+            'no gen0 or gen1 features as input': {
                 'feature_names': {'y', 'x', 'z'},
                 'expected': 'x'
             }
