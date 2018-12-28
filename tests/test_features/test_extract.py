@@ -5,7 +5,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from graphrole.features.extract import RecursiveFeatureExtractor
+from graphrole.features.extract import RecursiveFeatureExtractor, as_frame
 
 np.random.seed(0)
 
@@ -58,9 +58,9 @@ class BaseRecursiveFeatureExtractorTest:
             ))
 
             # generation > 0
-            self.rfe.generation_count = 1
-            self.rfe.generation_dict[0] = set(features_gen0.columns)
             self.rfe._features = features_gen0
+            self.rfe._final_features = {self.rfe.generation_count: features_gen0.to_dict()}
+            self.rfe.generation_count += 1
             features_gen1 = self.rfe._get_next_features()
             expected_features_gen1 = {
                 'external_edges(sum)':  {'a': 2.0, 'b': 1.0, 'c': 2.0, 'd': 1.0},
@@ -78,79 +78,39 @@ class BaseRecursiveFeatureExtractorTest:
             ))
 
         def test__update(self):
-            self.rfe._feature_group_thresh = -1  # has the effect of disabling pruning
             # seed with existing features
             existing_features = self.rfe._get_next_features()
-            self.rfe._final_features = [existing_features]
-            self.rfe._final_features_names = set(existing_features.columns)
-            # update with new features, include some overlap with old features
-            new_features = [
-                existing_features[existing_features.columns[0]],
+            self.rfe._features = existing_features
+            self.rfe._final_features = {self.rfe.generation_count: existing_features.to_dict()}
+
+            # update with new features, include one that will be redundant with old features
+            new_features = pd.concat([
+                pd.DataFrame(
+                    existing_features['degree'].values,
+                    columns=['degree2'],
+                    index=existing_features.index
+                ),
                 pd.DataFrame(
                     np.random.rand(existing_features.shape[0], 2),
                     columns=['a', 'b'],
                     index=existing_features.index
                 )
-            ]
-            new_features = pd.concat(new_features, axis=1)
+            ], axis=1)
+
+            # update
+            self.rfe.generation_count += 1
             self.rfe._update(new_features)
-            # test final features
-            expected_new_final_features = new_features[['a', 'b']]
-            expected_new_final_feature_names = \
-                set(existing_features.columns).union(set(new_features.columns))
-            pd.testing.assert_frame_equal(self.rfe._final_features[-1], expected_new_final_features)
-            self.assertSetEqual(self.rfe._final_features_names, expected_new_final_feature_names)
 
-        def test__add_features(self):
-            generation_count = 2
-            # build feature dataframe
-            feature_names = ['a', 'b', 'c']
-            nodes = ['node1', 'node2']
-            data = np.random.rand(len(nodes), len(feature_names))
-            features = pd.DataFrame(data, columns=feature_names, index=nodes)
-            # generation dict should only have a key for generation_count
-            expected_generation_dict = {generation_count: set(features.columns)}
-
-            # set generation_count
-            self.rfe.generation_count = generation_count
-            # add features
-            self.rfe._add_features(features)
-            # test features and generation_dict
-            pd.testing.assert_frame_equal(self.rfe._features, features)
-            self.assertDictEqual(self.rfe.generation_dict, expected_generation_dict)
-
-        def test__drop_features(self):
-            features = self.rfe._get_next_features()
-            feature_names = features.columns
-
-            table = {
-                'empty list': {
-                    'to_drop': [],
-                    'expected': feature_names
-                },
-                'one feature dropped': {
-                    'to_drop': feature_names[0],
-                    'expected': feature_names[1:]
-                },
-                'two features dropped': {
-                    'to_drop': feature_names[:2],
-                    'expected': feature_names[2:]
-                },
-                'all features dropped': {
-                    'to_drop': feature_names,
-                    'expected': []
-                },
-            }
-
-            for test_name, test in table.items():
-                self.setUp()
-                self.rfe._add_features(features)
-                self.rfe._drop_features(test['to_drop'])
-                self.assertSetEqual(
-                    set(self.rfe._features.columns),
-                    set(test['expected']),
-                    test_name
-                )
+            # test
+            final_features = self.rfe._finalize_features()
+            expected_final_features = pd.concat([
+                existing_features,
+                new_features[['a', 'b']]
+            ], axis=1)
+            pd.testing.assert_frame_equal(
+                final_features.sort_index(axis=1),
+                expected_final_features.sort_index(axis=1)
+            )
 
         def test__aggregated_df_to_dict(self):
             # dataframe
@@ -186,15 +146,20 @@ class BaseRecursiveFeatureExtractorTest:
                 'node2': {'a': 5, 'b': 6, 'c': 7, 'd': 8, 'e': 9},
             }
             expected_final_features = pd.DataFrame.from_dict(data, orient='index')
+
             # seed with list of pieces of result
-            self.rfe._final_features = [
-                expected_final_features[['a', 'b']],
-                expected_final_features[['c', 'd']],
-                expected_final_features['e'],
-            ]
+            self.rfe._final_features = {
+                0: expected_final_features[['a', 'b']].to_dict(),
+                1: expected_final_features[['c', 'd']].to_dict(),
+                2: expected_final_features['e'].to_frame().to_dict(),
+            }
+
             # test
             final_features = self.rfe._finalize_features()
-            pd.testing.assert_frame_equal(final_features, expected_final_features)
+            pd.testing.assert_frame_equal(
+                final_features.sort_index(axis=1),
+                expected_final_features.sort_index(axis=1)
+            )
 
         def test_extract_features_back_to_back(self):
             features1 = self.rfe.extract_features()
@@ -250,7 +215,7 @@ class TestWithDanglingNode(unittest.TestCase):
         # manually simulate one generation
         next_features0 = self.rfe._get_next_features()
         self.rfe._features = next_features0
-        self.rfe.generation_dict[self.rfe.generation_count] = next_features0.columns
+        self.rfe._final_features = {self.rfe.generation_count: next_features0.to_dict()}
         self.rfe.generation_count += 1
         # get next features
         next_features1 = self.rfe._get_next_features()
@@ -258,3 +223,18 @@ class TestWithDanglingNode(unittest.TestCase):
         self.assertListEqual(next_features1.index.tolist(), list(self.edge))
         # test that features are not null/nan
         self.assertTrue(all(next_features1.notnull()))
+
+
+class TestAsFrame(unittest.TestCase):
+
+    def test_as_frame(self):
+        # test series
+        series = pd.Series(np.random.rand(10))
+        result = as_frame(series)
+        self.assertIsInstance(result, pd.DataFrame)
+        pd.testing.assert_frame_equal(result, pd.DataFrame(series))
+        # test dataframe
+        frame = pd.DataFrame(np.random.rand(10))
+        result = as_frame(frame)
+        self.assertIsInstance(result, pd.DataFrame)
+        pd.testing.assert_frame_equal(result, frame)
