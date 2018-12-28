@@ -1,3 +1,4 @@
+from collections import ChainMap
 from typing import Dict, Iterable, List, Optional, TypeVar
 
 import pandas as pd
@@ -74,20 +75,17 @@ class RecursiveFeatureExtractor:
             features = self._get_next_features()
             self._update(features)
 
-            # stop if a recursive iteration results in no features retained
-            cur_features = self.generation_dict[generation]
-            retained_features = cur_features.intersection(self._features.columns)
-            if not retained_features:
-                return self._finalize_features()
+            # stop if an iteration results in no features retained
+            if not self._final_features[generation]:
+                break
 
         return self._finalize_features()
 
     def _finalize_features(self) -> DataFrameLike:
         """
-        Return concatenated DataFrame of final features
+        Return DataFrame of final features
         """
-        #return pd.concat(self._final_features, axis=1)
-        return pd.DataFrame(self._final_features)
+        return pd.DataFrame(dict(ChainMap(*self._final_features.values())))
 
     def _get_next_features(self) -> DataFrameLike:
         """
@@ -98,11 +96,8 @@ class RecursiveFeatureExtractor:
         if self.generation_count == 0:
             return self.graph.get_neighborhood_features()
 
-        # get nodes neighbors and aggregate their previous generation features, taking
-        # intersection with remaining features to avoid aggregated a removed/pruned feature
-        prev_features = self.generation_dict[self.generation_count - 1]
-        prev_features = prev_features.intersection(self._features.columns)
-
+        # get nodes neighbors and aggregate their previous generation features
+        prev_features = self._final_features[self.generation_count - 1].keys()
         features = {
             node: (
                 self._features
@@ -127,15 +122,22 @@ class RecursiveFeatureExtractor:
         """
         self._add_features(features)
 
+        
+        # TODO: figure out how to not need the last generation in get_oldest_features
+        #        then generation_dict can go away!
+        
         # prune redundant features
-        pruner = FeaturePruner(self.generation_dict, self._feature_group_thresh)
+        generation_features = {gen: features.keys() for gen, features in self._final_features.items()}
+        pruner = FeaturePruner(generation_features, self._feature_group_thresh)
+        #pruner = FeaturePruner(self.generation_dict, self._feature_group_thresh)
         features_to_prune = pruner.prune_features(self._features)
         self._drop_features(features_to_prune)
 
         # save features that remain after pruning and that
         # have not previously been saved as final features
         retained = features.columns.difference(features_to_prune)
-        self._final_features.update(self._features[retained].to_dict())
+        #self._final_features.update(self._features[retained].to_dict())
+        self._final_features[self.generation_count] = self._features[retained].to_dict()
 
     def _add_features(self, features: DataFrameLike) -> None:
         """
