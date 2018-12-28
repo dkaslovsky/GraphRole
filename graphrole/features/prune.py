@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist
 
-from graphrole.graph.graph import AdjacencyDictGraph
+from graphrole.graph.graph import AdjacencyDictGraph, Node
 
 DataFrameLike = Union[pd.DataFrame, pd.Series]
 VectorLike = Union[np.array, pd.Series]
+GenerationFeatureMapping = Dict[int, Dict[str, Dict[Node, float]]]
 T = TypeVar('T', int, str)
 
 
@@ -62,9 +63,14 @@ class FeaturePruner:
 
     """ Determines redundant features to be removed from future recursive aggregations """
 
-    def __init__(self, generation_dict: Dict[int, Set[str]], feature_group_thresh: int) -> None:
+    def __init__(
+        self,
+        generation_dict: GenerationFeatureMapping,
+        feature_group_thresh: int
+    ) -> None:
         """
-        :param generation_dict: mapping of recursive generation number to set of features generated
+        :param generation_dict: mapping of recursive generation number to 
+        dict of {features: {node: values}}
         :param feature_group_thresh: distance threshold for grouping binned version of features
         """
         self._generation_dict = generation_dict
@@ -118,14 +124,16 @@ class FeaturePruner:
         in the earliest generation; tie between features from same iteration
         are broken by sorted named order
         :param feature_names: set of feature names from which to find oldest
-        """ 
-
+        """
+        prev_gen_features = set()
         for gen in range(len(self._generation_dict)):
-            generation_features = self._generation_dict[gen]
+            generation_features = self._generation_dict[gen].keys()
             cur_features = feature_names.intersection(generation_features)
             if cur_features:
                 return self._set_getitem(cur_features)
-        return self._set_getitem(feature_names)
+            prev_gen_features.update(cur_features)
+        #return self._set_getitem(feature_names)
+        return self._set_getitem(feature_names - prev_gen_features)
 
     @staticmethod
     def _set_getitem(s: Set[T]) -> T:

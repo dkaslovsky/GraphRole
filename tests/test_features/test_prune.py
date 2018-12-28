@@ -107,8 +107,8 @@ class TestFeaturePruner(unittest.TestCase):
 
     def setUp(self):
         generation_dict = {
-            0: {'b', 'a'},
-            1: {'c', 'd'}
+            0: {'b': {0: 0, 1: 1}, 'a': {0: 2, 1: 3}},
+            1: {'c': {0: 4, 1: 5}, 'd': {0: 6, 1: 7}}
         }
         feature_group_thresh = 1
         self.pruner = FeaturePruner(generation_dict, feature_group_thresh)
@@ -124,8 +124,8 @@ class TestFeaturePruner(unittest.TestCase):
         features = pd.DataFrame(data)
 
         generation_dict = {
-            0: {'a', 'b', 'c'},
-            1: {'d', 'e'}
+            0: {'a': {0: 0, 1: 1}, 'b': {0: 2, 1: 3}, 'c': {0: 8, 1: 9}},
+            1: {'d': {0: 4, 1: 5}, 'e': {0: 6, 1: 7}}
         }
         self.pruner._generation_dict = generation_dict
 
@@ -192,8 +192,8 @@ class TestFeaturePruner(unittest.TestCase):
                 'expected': 'a'
             },
             'gen1 with features not in generation_dict': {
-                'feature_names': {'x', 'c', 'f', 'aa'},
-                'expected': 'c'
+                'feature_names': {'x', 'd', 'f', 'aa'},
+                'expected': 'd'
             },
             'no gen0 or gen1 features as input': {
                 'feature_names': {'y', 'x', 'z'},
@@ -203,7 +203,7 @@ class TestFeaturePruner(unittest.TestCase):
         for test_name, test in table.items():
             oldest = self.pruner._get_oldest_feature(test['feature_names'])
             self.assertEqual(oldest, test['expected'], test_name)
-    
+
     def test__set_getitem(self):
         table = {
             'ints': {

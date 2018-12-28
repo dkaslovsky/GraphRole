@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Optional, TypeVar
 
 import pandas as pd
 
-from graphrole.features.prune import DataFrameLike, FeaturePruner
+from graphrole.features.prune import DataFrameLike, FeaturePruner, GenerationFeatureMapping
 from graphrole.graph import interface
 
 T = TypeVar('T', int, str)
@@ -41,10 +41,8 @@ class RecursiveFeatureExtractor:
         self.max_generations = max_generations
         self.aggs = aggs if aggs else self.default_aggs
 
-        # current number of recursive generations
+        # current generation
         self.generation_count = 0
-        # dict mapping recursive generation number to set of features generated
-        self.generation_dict = {}  # type: Dict[int, Set[str]]
 
         # distance threshold for grouping (binned) features; incremented
         # by one at each generation, so although it always matches
@@ -52,12 +50,12 @@ class RecursiveFeatureExtractor:
         # variable for clarity
         self._feature_group_thresh = 0
         
-        # pd.DataFrame holding current
-        self._features = None     # type: Optional[DataFrameLike]
+        # pd.DataFrame holding current features
+        self._features = pd.DataFrame()
 
-        # dict of feature names to feature values representing the features retained
-        # at each generation to be emitted as the final extracted features
-        self._final_features = {}           # type: XXXX
+        # dict of generation number to dict of {feature names: {node: value} representing the
+        # features retained at each generation to be emitted as the final extracted features
+        self._final_features: GenerationFeatureMapping = {}
 
     def extract_features(self) -> DataFrameLike:
         """
@@ -85,7 +83,8 @@ class RecursiveFeatureExtractor:
         """
         Return DataFrame of final features
         """
-        return pd.DataFrame(dict(ChainMap(*self._final_features.values())))
+        feature_dict = dict(ChainMap(*self._final_features.values()))
+        return pd.DataFrame(feature_dict)
 
     def _get_next_features(self) -> DataFrameLike:
         """
@@ -122,14 +121,8 @@ class RecursiveFeatureExtractor:
         """
         self._add_features(features)
 
-        
-        # TODO: figure out how to not need the last generation in get_oldest_features
-        #        then generation_dict can go away!
-        
         # prune redundant features
-        generation_features = {gen: features.keys() for gen, features in self._final_features.items()}
-        pruner = FeaturePruner(generation_features, self._feature_group_thresh)
-        #pruner = FeaturePruner(self.generation_dict, self._feature_group_thresh)
+        pruner = FeaturePruner(self._final_features, self._feature_group_thresh)
         features_to_prune = pruner.prune_features(self._features)
         self._drop_features(features_to_prune)
 
@@ -145,7 +138,6 @@ class RecursiveFeatureExtractor:
         :param features: DataFrame of features to be added
         """
         self._features = pd.concat([self._features, features], axis=1, sort=True)
-        self.generation_dict[self.generation_count] = set(features.columns)
 
     def _drop_features(self, feature_names: Iterable[str]) -> None:
         """
