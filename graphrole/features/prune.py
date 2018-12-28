@@ -7,9 +7,9 @@ from scipy.spatial.distance import pdist
 
 from graphrole.graph.graph import AdjacencyDictGraph, Node
 
-DataFrameLike = Union[pd.DataFrame, pd.Series]
 VectorLike = Union[np.array, pd.Series]
-GenerationFeatureMapping = Dict[int, Dict[str, Dict[Node, float]]]
+DataFrameLike = Union[pd.DataFrame, pd.Series]
+DataFrameDict = Dict[str, Dict[Node, float]]  # returned by pd.DataFrame.to_dict()
 T = TypeVar('T', int, str)
 
 
@@ -65,7 +65,7 @@ class FeaturePruner:
 
     def __init__(
         self,
-        generation_dict: GenerationFeatureMapping,
+        generation_dict: Dict[int, DataFrameDict],
         feature_group_thresh: int
     ) -> None:
         """
