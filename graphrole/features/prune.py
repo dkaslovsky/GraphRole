@@ -125,15 +125,12 @@ class FeaturePruner:
         are broken by sorted named order
         :param feature_names: set of feature names from which to find oldest
         """
-        prev_gen_features = set()
         for gen in range(len(self._generation_dict)):
             generation_features = self._generation_dict[gen].keys()
             cur_features = feature_names.intersection(generation_features)
             if cur_features:
                 return self._set_getitem(cur_features)
-            prev_gen_features.update(cur_features)
-        #return self._set_getitem(feature_names)
-        return self._set_getitem(feature_names - prev_gen_features)
+        return self._set_getitem(feature_names)
 
     @staticmethod
     def _set_getitem(s: Set[T]) -> T:
