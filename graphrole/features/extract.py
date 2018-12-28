@@ -1,9 +1,10 @@
 from collections import ChainMap
-from typing import Dict, Iterable, List, Optional, TypeVar
+from typing import Dict, List, Optional, TypeVar
 
 import pandas as pd
 
-from graphrole.features.prune import DataFrameLike, FeaturePruner, GenerationFeatureMapping
+from graphrole.features.prune import (DataFrameDict, DataFrameLike,
+                                      FeaturePruner)
 from graphrole.graph import interface
 
 T = TypeVar('T', int, str)
@@ -49,13 +50,13 @@ class RecursiveFeatureExtractor:
         # self.generation_count, we maintain it as a separate instance
         # variable for clarity
         self._feature_group_thresh = 0
-        
+
         # pd.DataFrame holding current features
         self._features = pd.DataFrame()
 
-        # dict of generation number to dict of {feature names: {node: value}} representing the
-        # features retained at each generation to be emitted as the final extracted features
-        self._final_features: GenerationFeatureMapping = {}
+        # dict of generation number to dict dict representation dataframe
+        # of features retained at each generation to be emitted
+        self._final_features: Dict[int, DataFrameDict] = {}
 
     def extract_features(self) -> DataFrameLike:
         """
@@ -83,8 +84,8 @@ class RecursiveFeatureExtractor:
         """
         Return DataFrame of final features
         """
-        all_features = dict(ChainMap(*self._final_features.values()))
-        return pd.DataFrame(all_features)
+        all_features_dict = dict(ChainMap(*self._final_features.values()))
+        return pd.DataFrame(all_features_dict)
 
     def _get_next_features(self) -> DataFrameLike:
         """
@@ -128,7 +129,7 @@ class RecursiveFeatureExtractor:
         # save features that remain after pruning and that
         # have not previously been saved as final features
         retained = features.columns.difference(features_to_drop)
-        feature_dict = self._features[retained].to_dict()
+        feature_dict = as_frame(self._features[retained]).to_dict()
         self._final_features[self.generation_count] = feature_dict
 
     @staticmethod
@@ -147,3 +148,17 @@ class RecursiveFeatureExtractor:
             for idx, row in agg_dicts.items()
             for key, val in row.items()
         }
+
+
+# Helper functions
+
+def as_frame(df_like: DataFrameLike) -> pd.DataFrame:
+    """
+    Helper to safely cast a pd.Series to pd.DataFrame without throwing
+    an exception if input is already a pd.DataFrame
+    :param df_like: pd.Series or pd.DataFrame
+    """
+    try:
+        return df_like.to_frame()
+    except AttributeError:
+        return df_like
