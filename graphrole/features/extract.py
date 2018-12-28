@@ -53,7 +53,7 @@ class RecursiveFeatureExtractor:
         # pd.DataFrame holding current features
         self._features = pd.DataFrame()
 
-        # dict of generation number to dict of {feature names: {node: value} representing the
+        # dict of generation number to dict of {feature names: {node: value}} representing the
         # features retained at each generation to be emitted as the final extracted features
         self._final_features: GenerationFeatureMapping = {}
 
@@ -83,8 +83,8 @@ class RecursiveFeatureExtractor:
         """
         Return DataFrame of final features
         """
-        feature_dict = dict(ChainMap(*self._final_features.values()))
-        return pd.DataFrame(feature_dict)
+        all_features = dict(ChainMap(*self._final_features.values()))
+        return pd.DataFrame(all_features)
 
     def _get_next_features(self) -> DataFrameLike:
         """
@@ -119,32 +119,17 @@ class RecursiveFeatureExtractor:
         features from current generation
         :param features: candidate features from current recursive generation
         """
-        self._add_features(features)
-
+        # add features
+        self._features = pd.concat([self._features, features], axis=1, sort=True)
         # prune redundant features
         pruner = FeaturePruner(self._final_features, self._feature_group_thresh)
-        features_to_prune = pruner.prune_features(self._features)
-        self._drop_features(features_to_prune)
-
+        features_to_drop = pruner.prune_features(self._features)
+        self._features = self._features.drop(features_to_drop, axis=1)
         # save features that remain after pruning and that
         # have not previously been saved as final features
-        retained = features.columns.difference(features_to_prune)
-        #self._final_features.update(self._features[retained].to_dict())
-        self._final_features[self.generation_count] = self._features[retained].to_dict()
-
-    def _add_features(self, features: DataFrameLike) -> None:
-        """
-        Add features to self.features DataFrame; also update generation_dict
-        :param features: DataFrame of features to be added
-        """
-        self._features = pd.concat([self._features, features], axis=1, sort=True)
-
-    def _drop_features(self, feature_names: Iterable[str]) -> None:
-        """
-        Drop feature_names from feature and binned feature DataFrames
-        :param feature_names: iterable of feature names to be dropped
-        """
-        self._features.drop(feature_names, axis=1, inplace=True)
+        retained = features.columns.difference(features_to_drop)
+        feature_dict = self._features[retained].to_dict()
+        self._final_features[self.generation_count] = feature_dict
 
     @staticmethod
     def _aggregated_df_to_dict(agg_df: DataFrameLike) -> Dict[str, float]:
