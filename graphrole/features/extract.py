@@ -7,8 +7,6 @@ from graphrole.features.prune import (DataFrameDict, DataFrameLike,
                                       FeaturePruner)
 from graphrole.graph import interface
 
-T = TypeVar('T', int, str)
-
 
 class RecursiveFeatureExtractor:
 
