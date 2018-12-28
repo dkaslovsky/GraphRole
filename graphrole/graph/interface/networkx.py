@@ -23,7 +23,6 @@ class NetworkxInterface(BaseGraphInterface):
         local = self._get_local_features()
         ego = self._get_egonet_features()
         return (pd.concat([local, ego], axis=1)
-                .rename_axis('node', axis=0)
                 .sort_index())
 
     def get_nodes(self) -> Iterable[Node]:
