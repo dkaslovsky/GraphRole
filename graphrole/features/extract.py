@@ -54,12 +54,9 @@ class RecursiveFeatureExtractor:
         # pd.DataFrame holding current
         self._features = None     # type: Optional[DataFrameLike]
 
-        # list of pd.DataFrames to be concatenated representing the features retained
+        # dict of feature names to feature values representing the features retained
         # at each generation to be emitted as the final extracted features
-        self._final_features = []           # type: List[Union[pd.DataFrame, pd.Series]]
-        # feature names of the features stored in the list of DataFrames (self.final_features)
-        # used mainly for cheap deduplication of retained features
-        self._final_features_names = set()  # type: Set[str]
+        self._final_features = {}           # type: XXXX
 
     def extract_features(self) -> DataFrameLike:
         """
@@ -74,12 +71,12 @@ class RecursiveFeatureExtractor:
             self.generation_count = generation
             self._feature_group_thresh = generation
 
-            next_features = self._get_next_features()
-            self._update(next_features)
+            features = self._get_next_features()
+            self._update(features)
 
             # stop if a recursive iteration results in no features retained
-            cur_gen_features = self.generation_dict[generation]
-            retained_features = cur_gen_features.intersection(self._features.columns)
+            cur_features = self.generation_dict[generation]
+            retained_features = cur_features.intersection(self._features.columns)
             if not retained_features:
                 return self._finalize_features()
 
@@ -89,7 +86,8 @@ class RecursiveFeatureExtractor:
         """
         Return concatenated DataFrame of final features
         """
-        return pd.concat(self._final_features, axis=1)
+        #return pd.concat(self._final_features, axis=1)
+        return pd.DataFrame(self._final_features)
 
     def _get_next_features(self) -> DataFrameLike:
         """
@@ -136,12 +134,8 @@ class RecursiveFeatureExtractor:
 
         # save features that remain after pruning and that
         # have not previously been saved as final features
-        new_features = (
-            self._features.columns
-            .difference(self._final_features_names)
-        )
-        self._final_features.append(self._features[new_features])
-        self._final_features_names.update(new_features)
+        retained = features.columns.difference(features_to_prune)
+        self._final_features.update(self._features[retained].to_dict())
 
     def _add_features(self, features: DataFrameLike) -> None:
         """
