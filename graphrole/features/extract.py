@@ -1,5 +1,5 @@
 from collections import ChainMap
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional
 
 import pandas as pd
 

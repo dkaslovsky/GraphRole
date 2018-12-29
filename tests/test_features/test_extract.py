@@ -101,7 +101,15 @@ class BaseRecursiveFeatureExtractorTest:
             self.rfe.generation_count += 1
             self.rfe._update(new_features)
 
-            # test
+            # test _features
+            features = self.rfe._features
+            expected_features = pd.concat([
+                existing_features[['degree', 'external_edges']],
+                new_features[['a', 'b']]
+            ], axis=1)
+            pd.testing.assert_frame_equal(features, expected_features)
+
+            # test _final_features
             final_features = self.rfe._finalize_features()
             expected_final_features = pd.concat([
                 existing_features,
