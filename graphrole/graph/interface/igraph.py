@@ -18,15 +18,6 @@ class IgraphInterface(BaseGraphInterface):
         """
         self.G = G
 
-    def get_neighborhood_features(self) -> pd.DataFrame:
-        """
-        Return neighborhood features (local + egonet) for each node in the graph
-        """
-        local = self._get_local_features()
-        ego = self._get_egonet_features()
-        return (pd.concat([local, ego], axis=1)
-                .sort_index())
-
     def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph
