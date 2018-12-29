@@ -3,7 +3,8 @@ from typing import Iterable
 import networkx as nx
 import pandas as pd
 
-from graphrole.graph.interface import BaseGraphInterface, Node
+from graphrole.graph.interface import BaseGraphInterface
+from graphrole.types import Node
 
 
 class NetworkxInterface(BaseGraphInterface):

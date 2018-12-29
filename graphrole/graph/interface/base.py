@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple, TypeVar, Union
+from typing import Iterable
 
 import pandas as pd
 
-
-Node = Union[int, str]
-Edge = Tuple[Node, Node]
+from graphrole.types import Node
 
 
 class BaseGraphInterface(ABC):

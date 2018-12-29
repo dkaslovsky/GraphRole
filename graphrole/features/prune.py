@@ -1,15 +1,12 @@
 import itertools as it
-from typing import Dict, Iterator, List, Set, TypeVar, Union
+from typing import Dict, Iterator, List, Set, TypeVar
 
 import numpy as np
-import pandas as pd
 from scipy.spatial.distance import pdist
 
-from graphrole.graph.graph import AdjacencyDictGraph, Node
+from graphrole.graph.graph import AdjacencyDictGraph
+from graphrole.types import DataFrameDict, DataFrameLike, VectorLike
 
-VectorLike = Union[np.array, pd.Series]
-DataFrameLike = Union[pd.DataFrame, pd.Series]
-DataFrameDict = Dict[str, Dict[Node, float]]  # returned by pd.DataFrame.to_dict()
 T = TypeVar('T', int, str)
 
 

@@ -4,7 +4,8 @@ from typing import Iterable, List, Set
 import igraph as ig
 import pandas as pd
 
-from graphrole.graph.interface import BaseGraphInterface, Edge, Node
+from graphrole.graph.interface import BaseGraphInterface
+from graphrole.types import Edge, Node
 
 
 class IgraphInterface(BaseGraphInterface):

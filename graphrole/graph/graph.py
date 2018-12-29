@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, Set
 
-from graphrole.graph.interface import Edge, Node
+from graphrole.types import Edge, Node
 
 
 class AdjacencyDictGraph:

@@ -1,8 +1,10 @@
 from typing import List, TypeVar
 
-from graphrole.graph.interface.base import BaseGraphInterface, Edge, Node
+from graphrole.graph.interface.base import BaseGraphInterface
 from graphrole.graph.interface.igraph import IgraphInterface
 from graphrole.graph.interface.networkx import NetworkxInterface
+from graphrole.types import Edge, Node
+
 
 INTERFACES = {
     'networkx': NetworkxInterface,
