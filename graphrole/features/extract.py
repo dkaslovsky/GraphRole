@@ -134,18 +134,22 @@ class RecursiveFeatureExtractor:
     def _aggregated_df_to_dict(agg_df: DataFrameLike) -> Dict[str, float]:
         """
         Transform DataFrame of aggregated features to dict formatted for
-        concatenation with self.features DataFrame
+        concatenation with self._features DataFrame
         :param agg_df: agregated features resulting from df.agg(self.aggs)
         """
         try:
             agg_dicts = agg_df.to_dict(orient='index')
         except TypeError:
+            # pd.Series objects do not have to_dict method with orient kwarg
+            # so cast to pd.DataFrame and transpose for correct shape
             agg_dicts = agg_df.to_frame().T.to_dict(orient='index')
-        return {
+
+        formatted_agg_dict = {
             f'{key}({idx})': val
             for idx, row in agg_dicts.items()
             for key, val in row.items()
         }
+        return formatted_agg_dict
 
 
 # Helper functions
