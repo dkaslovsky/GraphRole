@@ -34,6 +34,7 @@ class BaseGraphInterfaceTest:
         """ Unit tests for interfaces to graph libraries """
 
         graph = None
+        graph_empty = None
 
         nodes = range(7)
         edges = [
@@ -41,6 +42,10 @@ class BaseGraphInterfaceTest:
             (3, 6), (4, 5), (4, 6),
             (5, 6)
         ]
+
+        def test_get_num_edges(self):
+            self.assertEqual(self.graph.get_num_edges(), len(self.edges))
+            self.assertEqual(self.graph_empty.get_num_edges(), 0)
 
         def test_get_nodes(self):
             nodes = self.graph.get_nodes()
@@ -114,6 +119,9 @@ class TestNetworkxInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
     @classmethod
     def setUpClass(cls):
+        G_empty = nx.Graph()
+        cls.graph_empty = interface.NetworkxInterface(G_empty)
+
         G = nx.Graph(cls.edges)
         cls.graph = interface.NetworkxInterface(G)
 
@@ -124,6 +132,9 @@ class TestIgraphInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
     @classmethod
     def setUpClass(cls):
+        G_empty = ig.Graph()
+        cls.graph_empty = interface.IgraphInterface(G_empty)
+
         G = ig.Graph()
         G.add_vertices(len(cls.nodes))
         G.add_edges(cls.edges)

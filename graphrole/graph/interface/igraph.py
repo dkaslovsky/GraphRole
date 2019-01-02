@@ -18,6 +18,12 @@ class IgraphInterface(BaseGraphInterface):
         """
         self.G = G
 
+    def get_num_edges(self) -> int:
+        """
+        Return number of edges in the graph
+        """
+        return self.G.ecount()
+
     def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph

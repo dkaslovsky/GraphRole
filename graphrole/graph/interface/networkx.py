@@ -17,6 +17,12 @@ class NetworkxInterface(BaseGraphInterface):
         """
         self.G = G
 
+    def get_num_edges(self) -> int:
+        """
+        Return number of edges in the graph
+        """
+        return self.G.number_of_edges()
+
     def get_nodes(self) -> Iterable[Node]:
         """
         Return iterable of nodes in the graph
