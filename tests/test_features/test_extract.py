@@ -30,6 +30,10 @@ class BaseRecursiveFeatureExtractorTest:
 
         def setUp(self):
             self.rfe = RecursiveFeatureExtractor(self.G, aggs=self.aggs)
+            # initialize with neighborhood features
+            self.rfe._features = self.rfe.graph.get_neighborhood_features()
+            self.rfe._final_features = {0: self.rfe._features.to_dict()}
+            self.rfe.generation_count = 1
 
         def test_initialize_with_unknown_graph_type(self):
             class SomeGraph:
@@ -37,30 +41,14 @@ class BaseRecursiveFeatureExtractorTest:
             with self.assertRaises(TypeError):
                 _ = RecursiveFeatureExtractor(SomeGraph)
 
-        def test__get_next_features_empty_graph(self):
-            self.rfe = RecursiveFeatureExtractor(self.G_empty)
-            features = self.rfe._get_next_features()
-            self.assertTrue(features.empty)
+        def test__initialize_with_empty_graph(self):
+            with self.assertRaises(ValueError):
+                _ = RecursiveFeatureExtractor(self.G_empty)
 
         def test__get_next_features(self):
-            # generation 0
-            features_gen0 = self.rfe._get_next_features()
-            expected_features_gen0 = {
-                'degree':         {'a': 2, 'b': 1, 'c': 2, 'd': 1},
-                'internal_edges': {'a': 2, 'b': 1, 'c': 2, 'd': 1},
-                'external_edges': {'a': 1, 'b': 1, 'c': 1, 'd': 1}
-            }
-            # some graph interfaces do not support string node names so we will test
-            # the values of the feature DataFrames and intentionally ignore the index
-            self.assertTrue(np.allclose(
-                features_gen0.sort_index(axis=1).sort_index(axis=0).values,
-                pd.DataFrame(expected_features_gen0).sort_index(axis=1).sort_index(axis=0).values
-            ))
-
-            # generation > 0
-            self.rfe._features = features_gen0
-            self.rfe._final_features = {self.rfe.generation_count: features_gen0.to_dict()}
-            self.rfe.generation_count += 1
+            # self.rfe._features = self.rfe.graph.get_neighborhood_features()
+            # self.rfe._final_features = {0: self.rfe._features.to_dict()}
+            # self.rfe.generation_count = 1
             features_gen1 = self.rfe._get_next_features()
             expected_features_gen1 = {
                 'external_edges(sum)':  {'a': 2.0, 'b': 1.0, 'c': 2.0, 'd': 1.0},
@@ -78,12 +66,8 @@ class BaseRecursiveFeatureExtractorTest:
             ))
 
         def test__update(self):
-            # seed with existing features
-            existing_features = self.rfe._get_next_features()
-            self.rfe._features = existing_features
-            self.rfe._final_features = {self.rfe.generation_count: existing_features.to_dict()}
-
-            # update with new features, include one that will be redundant with old features
+            # update with new features, include one that will be pruned
+            existing_features = self.rfe._features
             new_features = pd.concat([
                 pd.DataFrame(
                     existing_features['degree'].values,
@@ -97,8 +81,6 @@ class BaseRecursiveFeatureExtractorTest:
                 )
             ], axis=1)
 
-            # update
-            self.rfe.generation_count += 1
             self.rfe._update(new_features)
 
             # test _features
@@ -170,6 +152,7 @@ class BaseRecursiveFeatureExtractorTest:
             )
 
         def test_extract_features_back_to_back(self):
+            self.rfe = RecursiveFeatureExtractor(self.G)
             features1 = self.rfe.extract_features()
             features2 = self.rfe.extract_features()
             pd.testing.assert_frame_equal(features1, features2)
@@ -220,12 +203,12 @@ class TestWithDanglingNode(unittest.TestCase):
         self.assertTrue(all(features.notnull()))
 
     def test_internal_with_dangling_nodes(self):
-        # manually simulate one generation
-        next_features0 = self.rfe._get_next_features()
+        # manually seed first generation
+        next_features0 = self.rfe.graph.get_neighborhood_features()
         self.rfe._features = next_features0
-        self.rfe._final_features = {self.rfe.generation_count: next_features0.to_dict()}
-        self.rfe.generation_count += 1
+        self.rfe._final_features = {0: next_features0.to_dict()}
         # get next features
+        self.rfe.generation_count = 1
         next_features1 = self.rfe._get_next_features()
         # test that dangling nodes did not generate features
         self.assertListEqual(next_features1.index.tolist(), list(self.edge))

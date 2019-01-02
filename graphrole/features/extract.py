@@ -35,6 +35,8 @@ class RecursiveFeatureExtractor:
         if graph is None:
             raise TypeError(f'Input graph G must be from one of the following '
                             f'supported libraries: {self.supported_graph_libs}')
+        if graph.get_num_edges() == 0:
+            raise ValueError('Input graph G must contain at least one edge')
 
         self.graph = graph
         self.max_generations = max_generations
@@ -64,7 +66,11 @@ class RecursiveFeatureExtractor:
         if self._final_features:
             return self._finalize_features()
 
-        for generation in range(self.max_generations):
+        # initialization: generation 0 features are neighborhood features
+        features = self.graph.get_neighborhood_features()
+        self._update(features)
+
+        for generation in range(1, self.max_generations):
 
             self.generation_count = generation
             self._feature_group_thresh = generation
@@ -90,10 +96,6 @@ class RecursiveFeatureExtractor:
         Return next level of recursive features (aggregations of node
         features from previous generation)
         """
-        # initial (generation 0) features are neighborhood features
-        if self.generation_count == 0:
-            return self.graph.get_neighborhood_features()
-
         # get nodes neighbors and aggregate their previous generation features
         prev_features = self._final_features[self.generation_count - 1].keys()
         features = {
