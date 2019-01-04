@@ -11,6 +11,55 @@ np.random.seed(0)
 
 # pylint: disable=protected-access
 
+class TestAsFrame(unittest.TestCase):
+
+    def test_as_frame(self):
+        # test series
+        series = pd.Series(np.random.rand(10))
+        result = as_frame(series)
+        self.assertIsInstance(result, pd.DataFrame)
+        pd.testing.assert_frame_equal(result, pd.DataFrame(series))
+        # test dataframe
+        frame = pd.DataFrame(np.random.rand(10))
+        result = as_frame(frame)
+        self.assertIsInstance(result, pd.DataFrame)
+        pd.testing.assert_frame_equal(result, frame)
+
+
+class TestRecursiveFeatureExtractorWithDanglingNode(unittest.TestCase):
+
+    """ Unit tests for RecursiveFeatureExtractor when graph has dangling nodes """
+
+    def setUp(self):
+        # build graph with dangling nodes
+        self.nodes = ['a', 'b', 'c', 'd']
+        self.edge = ('a', 'c')
+        self.G = nx.Graph()
+        self.G.add_nodes_from(self.nodes)
+        self.G.add_edge(*self.edge)
+        self.rfe = RecursiveFeatureExtractor(self.G)
+
+    def test_e2e_with_dangling_nodes(self):
+        features = self.rfe.extract_features()
+        # test that all nodes are present in feature dataframe
+        self.assertListEqual(features.index.tolist(), self.nodes)
+        # test that no features are null/nan
+        self.assertTrue(all(features.notnull()))
+
+    def test_internal_with_dangling_nodes(self):
+        # manually seed first generation
+        next_features0 = self.rfe.graph.get_neighborhood_features()
+        self.rfe._features = next_features0
+        self.rfe._final_features = {0: next_features0.to_dict()}
+        # get next features
+        self.rfe.generation_count = 1
+        next_features1 = self.rfe._get_next_features()
+        # test that dangling nodes did not generate features
+        self.assertListEqual(next_features1.index.tolist(), list(self.edge))
+        # test that features are not null/nan
+        self.assertTrue(all(next_features1.notnull()))
+
+
 class BaseRecursiveFeatureExtractorTest:
 
     class TestCases(unittest.TestCase):
@@ -180,52 +229,3 @@ class TestRecursiveFeatureExtractorIgraph(BaseRecursiveFeatureExtractorTest.Test
         G.add_edges(cls.edges)
         cls.G = G
         cls.G_empty = ig.Graph()
-
-
-class TestWithDanglingNode(unittest.TestCase):
-
-    """ Unit tests for RecursiveFeatureExtractor when graph has dangling nodes """
-
-    def setUp(self):
-        # build graph with dangling nodes
-        self.nodes = ['a', 'b', 'c', 'd']
-        self.edge = ('a', 'c')
-        self.G = nx.Graph()
-        self.G.add_nodes_from(self.nodes)
-        self.G.add_edge(*self.edge)
-        self.rfe = RecursiveFeatureExtractor(self.G)
-
-    def test_e2e_with_dangling_nodes(self):
-        features = self.rfe.extract_features()
-        # test that all nodes are present in feature dataframe
-        self.assertListEqual(features.index.tolist(), self.nodes)
-        # test that no features are null/nan
-        self.assertTrue(all(features.notnull()))
-
-    def test_internal_with_dangling_nodes(self):
-        # manually seed first generation
-        next_features0 = self.rfe.graph.get_neighborhood_features()
-        self.rfe._features = next_features0
-        self.rfe._final_features = {0: next_features0.to_dict()}
-        # get next features
-        self.rfe.generation_count = 1
-        next_features1 = self.rfe._get_next_features()
-        # test that dangling nodes did not generate features
-        self.assertListEqual(next_features1.index.tolist(), list(self.edge))
-        # test that features are not null/nan
-        self.assertTrue(all(next_features1.notnull()))
-
-
-class TestAsFrame(unittest.TestCase):
-
-    def test_as_frame(self):
-        # test series
-        series = pd.Series(np.random.rand(10))
-        result = as_frame(series)
-        self.assertIsInstance(result, pd.DataFrame)
-        pd.testing.assert_frame_equal(result, pd.DataFrame(series))
-        # test dataframe
-        frame = pd.DataFrame(np.random.rand(10))
-        result = as_frame(frame)
-        self.assertIsInstance(result, pd.DataFrame)
-        pd.testing.assert_frame_equal(result, frame)
