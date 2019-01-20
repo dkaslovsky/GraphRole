@@ -2,66 +2,72 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from scipy.stats import entropy
 from sklearn.cluster import KMeans
 from sklearn.decomposition import NMF
 
 
-def extract_role_factors(
-    features: pd.DataFrame,
-    n_roles: Optional[int] = None
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Return node-role and role-feature factor DataFrames
-    :param features: DataFrame of features
-    :param n_roles: optional number of roles to extract
-    """
-    n_roles = n_roles if n_roles is not None else get_num_roles(features)
+def extract_role_factors(features, n_roles=None):
+    node_role_ndarray, role_feature_ndarray = get_role_ndarrays(features, n_roles)
 
-    nmf = NMF(n_components=n_roles, solver='mu')
-    role_labels = [f'role_{i}' for i in range(n_roles)]
-
-    node_role_array = nmf.fit_transform(features)
-    role_feature_array = nmf.components_
+    role_labels = [f'role_{i}' for i in range(node_role_ndarray.shape[1])]
 
     node_role_df = pd.DataFrame(
-        node_role_array,
+        node_role_ndarray,
         index=features.index,
         columns=role_labels
     )
     role_feature_df = pd.DataFrame(
-        role_feature_array,
+        role_feature_ndarray,
         index=role_labels,
         columns=features.columns
     )
+
     return node_role_df, role_feature_df
 
 
-def get_num_roles(features: pd.DataFrame) -> int:
-    """
-    Return estimate of number of node roles present based on node features
-    :param features: DataFrame of features
-    """
-    return 2
+def get_role_ndarrays(features, n_roles=None):
+
+    if n_roles:
+        n_bins = np.log2(features.shape[0])
+        return get_role_factors(features, n_roles, n_bins)
+
+    # TODO: error check against features.shape
+    # TODO: populate with real values instead of these placeholders
+    n_bins_grid = range(2, features.shape[0])
+    n_roles_grid = range(2, min(min(features.shape), 8))
+
+    min_cost = np.inf
+    min_code = (None, None)
+
+    for n_bins in n_bins_grid:
+        for n_roles in n_roles_grid:
+
+            code = get_role_factors(features, n_roles, n_bins)
+            cost = get_description_length(features, code, n_bins)
+
+            if cost < min_cost:
+                min_cost = cost
+                min_code = code
+
+    return min_code
 
 
-# TODO: need to normalize encoding cost / error cost to the same scale?
-def description_len(nmf_tuple: Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame], bits: int) -> float:
-
-    (V, G, F) = nmf_tuple
-
-    bins = 2**bits
-    G_quantized = quantize(G.values, bins)
-    F_quantized = quantize(F.values, bins)
-    V_encoded = G_quantized @ F_quantized
-
-    encoding_cost = bits * (G_quantized.size + F_quantized.size)
-    error_cost = kl_divergence(V.values.ravel(), V_encoded.ravel())  # TODO: eliminate ravel
-    print(encoding_cost, error_cost)
-    return encoding_cost + error_cost
+def get_role_factors(features, n_roles, n_bins):
+    V = features.values
+    G, F = get_nmf_factors(V, n_roles)
+    G_encoded = encode(G, n_bins)
+    F_encoded = encode(F, n_bins)
+    return G_encoded, F_encoded
 
 
-def quantize(X: np.ndarray, bins: int) -> np.array:
+def get_nmf_factors(X: np.ndarray, n_roles: int) -> Tuple[np.ndarray, np.ndarray]:
+    nmf = NMF(n_components=n_roles, solver='mu')
+    G = nmf.fit_transform(X)
+    F = nmf.components_
+    return G, F
+
+
+def encode(X: np.ndarray, bins: int) -> np.array:
     # quantize using Lloyd-Max quantizier which can be computed using kmeans
     # https://en.wikipedia.org/wiki/Quantization_(signal_processing)
     data = X.reshape(X.size, 1)
@@ -71,7 +77,22 @@ def quantize(X: np.ndarray, bins: int) -> np.array:
     return quantized.reshape(X.shape)
 
 
-# TODO: check if this is equal to https://scipy.github.io/devdocs/generated/scipy.stats.entropy.html
-# TODO: check if this is the same as the equation given in the paper
-def kl_divergence(v1, v2):
-    return entropy(pk=v1, qk=v2, base=2)
+def get_description_length(features, code, n_bins):
+    G_encoded, F_encoded = code
+    V_approx = G_encoded @ F_encoded
+    V = features.values
+
+    bits = 2**n_bins
+    encoding_cost = bits * (G_encoded.size + F_encoded.size)
+    error_cost = get_error_cost(V, V_approx)
+    print(encoding_cost, error_cost)
+    total_cost = encoding_cost + error_cost
+    return total_cost
+
+
+def get_error_cost(V, V_approx):
+    # KL divergence as given in paper
+    vec1 = V.ravel()
+    vec2 = V_approx.ravel()
+    kl_div = np.sum(np.where(vec1 != 0, vec1 * np.log(vec1 / vec2) - vec1 + vec2, 0))
+    return kl_div
