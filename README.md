@@ -1,11 +1,28 @@
 # GraphRole
 
-Much more to come...
+Automatic feature extraction and node role assignment for transfer learning on graphs; based on the ReFeX/RolX algorithms [1, 2] of Henderson, et al.
 
-So Far
-- Recursive Feature Extraction (ReFeX) for Graphs
-- See: [henderson-kdd2011.pdf](http://www.cs.cmu.edu/~leili/pubs/henderson-kdd2011.pdf)
-- Interface for Networkx graphs; to add support for any other graph library:
-  - Subclass Graph ABC in `graphrole.graph.graph.py`
-  - Update dict of supported interfaces in `graphrole.graph.interface.py`
-  - Add tests via trivial subclass in `tests.test_graph.test_graph.py`
+### Overview
+This package is still a work in progress.  It has only been tested with Python 3.7 at this point.
+
+Remaining features to add include:
+* Sense-making (model explanation) to the role extraction module
+* Tests for the role extraction module
+* Support for reading graph from text file
+* Support directed and weighted graphs
+* Improve example.py
+* Add standard packaging/setup/CI capabilities
+
+
+### Graph Interfaces
+An interface for graph data structures is provided in the `graphrole.graph.interface` module.  Implementations for `networkx` and `igraph` are included.
+
+To add an implementation of an additional graph library or data structure:
+1. Subclass the `BaseGraphInterface` ABC in `graphrole.graph.interface.base.py` and implement the required methods
+1. Update the `INTERFACES` dict in `graphrole.graph.interface.__init__.py` to make the new subclass discoverable
+1. Add tests by trivially implementing a `setUpClass()` classmethod of a subclass of `BaseGraphInterfaceTest.BaseGraphInterfaceTestCases` in the `tests.test_graph.test_interface.py` module
+
+### References
+[1] Henderson, et al. [It’s Who You Know: Graph Mining Using Recursive Structural Features](http://www.cs.cmu.edu/~leili/pubs/henderson-kdd2011.pdf)
+
+[2] Henderson, et al. [RolX: Structural Role Extraction & Mining in Large Graphs](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/46591.pdf)
