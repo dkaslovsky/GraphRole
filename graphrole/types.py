@@ -16,3 +16,5 @@ Edge = Tuple[Node, Node]
 
 # returned by pd.DataFrame.to_dict()
 DataFrameDict = Dict[str, Dict[Node, float]]
+
+FactorTuple = Tuple[np.ndarray, np.ndarray]
