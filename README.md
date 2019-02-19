@@ -9,12 +9,10 @@ this project may adopt the `pipenv` paradigm.
 
 Remaining features to add include:
 * Sense-making (model explanation) to the role extraction module
-* Tests for the role extraction module
 * Support for reading graph from text file
 * Support directed and weighted graphs
 * Improve example.py
 * Add standard packaging/setup/CI capabilities
-
 
 ### Graph Interfaces
 An interface for graph data structures is provided in the `graphrole.graph.interface` module.  Implementations for `networkx` and `igraph` are included.
