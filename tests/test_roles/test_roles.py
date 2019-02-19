@@ -19,17 +19,55 @@ class TestRoles(unittest.TestCase):
         data = np.random.rand(self.n_nodes, self.n_features)
         self.features = pd.DataFrame(data, columns=feature_names, index=node_names)
 
+    def test_extract_role_factors(self):
+        G, F = rl.extract_role_factors(self.features)
+        n_roles = G.shape[1]
+        self.assertEqual(G.shape[1], F.shape[0])
+        expected_features = set(self.features.columns)
+        expected_nodes = set(self.features.index)
+        expected_roles = {f'role_{i}' for i in range(n_roles)}
+        self.assertSetEqual(set(G.index), expected_nodes)
+        self.assertSetEqual(set(G.columns), expected_roles)
+        self.assertSetEqual(set(F.index), expected_roles)
+        self.assertSetEqual(set(F.columns), expected_features)
+    
+    def test_get_role_ndarrays(self):
+        table = {
+            'specified n_roles': {
+                'specified_n_roles': 4,
+                'expected_n_roles': 4,
+            },
+            'unspecified n_roles': {
+                'specified_n_roles': None,
+                'expected_n_roles': 2,  # the model selection selects 2 for the generated data
+            },
+        }
+        for test_name, test in table.items():
+            specified_n_roles = test['specified_n_roles']
+            expected_n_roles = test['expected_n_roles']
+            G, F = rl.get_role_ndarrays(self.features, n_roles=specified_n_roles, verbose=False)
+            n_roles = G.shape[1]
+            self.assertEqual(G.shape[1], F.shape[0], test_name)
+            self.assertEqual(n_roles, expected_n_roles, test_name)
+    
     def test_get_role_factors(self):
+        min_shape = min(self.features.shape)
         for n_roles in range(2, 4):
             for n_bits in range(1, 7):
                 expected_uniq_vals = 2**n_bits
+                # ValueError is raised if not enough samples exist to encode with n_bits
+                if expected_uniq_vals > n_roles * min_shape:
+                    with self.assertRaises(ValueError):
+                        G, F = rl.get_role_factors(self.features, n_roles, n_bits)
+                    continue
+                # enough samples exist to get role factors
                 G, F = rl.get_role_factors(self.features, n_roles, n_bits)
                 uniq_vals_g = len(np.unique(G))
-                uniq_vals_F = len(np.unique(F))
+                uniq_vals_f = len(np.unique(F))
                 self.assertTupleEqual(G.shape, (self.n_nodes, n_roles))
-                self.assertEqual(uniq_vals_g, expected_uniq_vals)
+                self.assertLessEqual(uniq_vals_g, expected_uniq_vals)
                 self.assertTupleEqual(F.shape, (n_roles, self.n_features))
-                self.assertEqual(uniq_vals_F, expected_uniq_vals)
+                self.assertLessEqual(uniq_vals_f, expected_uniq_vals)
 
     def test_get_nmf_factors(self):
         for n_roles in range(2, 4):
@@ -42,7 +80,7 @@ class TestRoles(unittest.TestCase):
             data = self.features.values
             encoded = rl.encode(data, n_bins)
             uniq_vals = np.unique(encoded)
-            self.assertEqual(len(uniq_vals), n_bins)
+            self.assertLessEqual(len(uniq_vals), n_bins)
 
     def test_get_description_length(self):
         for n_roles in range(2, 4):
