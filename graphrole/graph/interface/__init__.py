@@ -1,14 +1,20 @@
 from typing import List, TypeVar
 
 from graphrole.graph.interface.base import BaseGraphInterface
-from graphrole.graph.interface.igraph import IgraphInterface
 from graphrole.graph.interface.networkx import NetworkxInterface
 from graphrole.types import Edge, Node
 
+# IgraphInterface should not be imported if igraph is not installed
+try:
+    from graphrole.graph.interface.igraph import IgraphInterface
+except ImportError:
+    pass
 
 INTERFACES = {
     'networkx': NetworkxInterface,
-    'igraph':   IgraphInterface,
+    # lazy eval in case IgraphInterface was not imported
+    # pylint: disable=unnecessary-lambda
+    'igraph':   lambda x: IgraphInterface(x),
 }
 
 
