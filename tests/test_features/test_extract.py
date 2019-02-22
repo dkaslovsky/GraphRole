@@ -1,11 +1,18 @@
 import unittest
 
-import igraph as ig
 import networkx as nx
 import numpy as np
 import pandas as pd
 
 from graphrole.features.extract import RecursiveFeatureExtractor, as_frame
+
+# try to import igraph; if not found set flag to skip associated tests
+skip_igraph_tests = False
+try:
+    import igraph as ig
+except ImportError:
+    skip_igraph_tests = True
+
 
 np.random.seed(0)
 
@@ -221,6 +228,10 @@ class TestRecursiveFeatureExtractorIgraph(BaseRecursiveFeatureExtractorTest.Test
 
     """ Unit tests using Igraph interface """
 
+    @unittest.skipIf(
+        skip_igraph_tests,
+        reason='igraph not found, skipping associated extract tests'
+    )
     @classmethod
     def setUpClass(cls):
         G = ig.Graph()

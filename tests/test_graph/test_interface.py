@@ -1,11 +1,17 @@
 import itertools as it
 import unittest
 
-import igraph as ig
 import networkx as nx
 import pandas as pd
 
 from graphrole.graph import interface
+
+# try to import igraph; if not found set flag to skip associated tests
+skip_igraph_tests = False
+try:
+    import igraph as ig
+except ImportError:
+    skip_igraph_tests = True
 
 
 class TestGetInterface(unittest.TestCase):
@@ -130,6 +136,10 @@ class TestIgraphInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
     """ Unit tests for Igraph interface """
 
+    @unittest.skipIf(
+        skip_igraph_tests,
+        reason='igraph not found, skipping associated interface tests'
+    )
     @classmethod
     def setUpClass(cls):
         G_empty = ig.Graph()
