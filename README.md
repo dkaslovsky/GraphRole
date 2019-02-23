@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/dkaslovsky/GraphRole.svg?branch=master)](https://travis-ci.org/dkaslovsky/GraphRole)
 [![Coverage Status](https://coveralls.io/repos/github/dkaslovsky/GraphRole/badge.svg?branch=master)](https://coveralls.io/github/dkaslovsky/GraphRole?branch=master)
 [![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 
 Automatic feature extraction and node role assignment for transfer learning on graphs; based on the ReFeX/RolX algorithms [1, 2] of Henderson, et al.
 
@@ -15,9 +15,11 @@ A fundamental problem for learning on graphs is extracting meaningful features. 
 Please see [1, 2] for more technical details.
 
 ### Installation
-This package is not yet hosted on PyPI.  To install locally, clone this repo and run the `setup.py` script:
+This package is not yet hosted on PyPI.  To install from source, clone this repo and run the `setup.py` script:
 ```
-$ python setup.py bdist_wheel
+$ git clone https://github.com/dkaslovsky/GraphRole.git
+$ cd GraphRole
+$ python setup.py install
 ```
 
 ### Example Usage
