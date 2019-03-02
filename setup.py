@@ -9,7 +9,7 @@ with open('requirements.txt') as f:
 
 
 setup(
-    name='graphRole',
+    name='GraphRole',
     version='0.1.0',
     author='Daniel Kaslovsky',
     author_email='dkaslovsky@gmail.com',
