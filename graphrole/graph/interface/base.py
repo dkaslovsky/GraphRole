@@ -18,7 +18,7 @@ class BaseGraphInterface(ABC):
         """
         local = self._get_local_features()
         ego = self._get_egonet_features()
-        features = (pd.concat([local, ego], axis=1)
+        features = (pd.concat([local, ego], axis=1, sort=True)
                     .sort_index())
         return features
 
