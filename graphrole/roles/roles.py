@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Optional, Tuple
 import warnings
 
@@ -15,18 +16,22 @@ MIN_BITS, MAX_BITS = (1, 8)
 
 def extract_role_factors(
     features: pd.DataFrame,
-    n_roles: Optional[int] = None,
-    verbose: bool = False
+    n_roles: Optional[int] = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Wrapper for extracting role factors from a node feature DataFrame
      and returning factor DataFrames
     :param features: DataFrame with rows of node features
     :param n_roles: number of roles to extract or None for automatic selection
-    :param verbose: flag for printing model cost at each iteration
     """
-
-    node_role_ndarray, role_feature_ndarray = get_role_ndarrays(features, n_roles, verbose)
+    if n_roles:
+        # factors will be of shape (n_nodes x n_roles) and (n_roles x n_features) for
+        # a total of n_roles * (n_nodes + n_features), so encode with approximately
+        # log2(n_roles * (n_nodes + n_features)) bits
+        n_bits = int(np.log2(n_roles * sum(features.shape)))
+        node_role_ndarray, role_feature_ndarray = get_role_factors(features, n_roles, n_bits)
+    else:
+        node_role_ndarray, role_feature_ndarray = select_model(features)
 
     role_labels = [f'role_{i}' for i in range(node_role_ndarray.shape[1])]
 
@@ -44,48 +49,59 @@ def extract_role_factors(
     return node_role_df, role_feature_df
 
 
-def get_role_ndarrays(
-    features: pd.DataFrame,
-    n_roles: Optional[int],
-    verbose: bool
-) -> FactorTuple:
+def select_model(features: pd.DataFrame) -> FactorTuple:
     """
-    Main function for extracting role factors; model selection is automated using
-     Minimum Description Length
+    Select optimal model via grid search over n_roles and n_bits as measured
+     by Minimum Description Length
     :param features: DataFrame with rows of node features
-    :param n_roles: number of roles to extract or None for automatic selection
-    :param verbose: flag for printing model cost at each iteration
     """
+    # define grid
+    max_bits_grid_idx = 1 + MAX_BITS
+    max_roles_grid_idx = 1 + min(min(features.shape), MAX_ROLES)
+    n_bits_grid = range(MIN_BITS, max_bits_grid_idx)
+    n_roles_grid = range(MIN_ROLES, max_roles_grid_idx)
 
-    # model selection
-    if n_roles:
-        n_roles_grid = [n_roles]
-    else:
-        max_roles = min(min(features.shape), MAX_ROLES)
-        n_roles_grid = range(MIN_ROLES, max_roles + 1)
-    n_bits_grid = range(MIN_BITS, MAX_BITS + 1)
+    # ndarrays to store encoding and error costs
+    matrix_dims = (max_roles_grid_idx, max_bits_grid_idx)
+    encoding_costs = np.full(matrix_dims, np.nan)
+    error_costs = np.full(matrix_dims, np.nan)
+    # dict to store factor tuples
+    factors = defaultdict(dict)
 
-    min_cost = np.inf
-    min_code = (None, None)
-
+    # grid search
     for roles in n_roles_grid:
         for bits in n_bits_grid:
 
             try:
-                code = get_role_factors(features, roles, bits)
-                cost, *components = get_description_length(features, code, bits)
+                model = get_role_factors(features, roles, bits)
+                encoding_cost, error_cost = get_description_length(features, model, bits)
             except ValueError:
                 # raised when bits is too large to quantize the number of samples
-                cost = np.nan
+                continue
 
-            if verbose:
-                report_cost(roles, bits, cost, components)
+            encoding_costs[roles, bits] = encoding_cost
+            error_costs[roles, bits] = error_cost
+            factors[roles][bits] = model
 
-            if cost < min_cost:
-                min_cost = cost
-                min_code = code
+    # select factors with minimal cost
+    costs = rescale_costs(encoding_costs) + rescale_costs(error_costs)
+    min_cost = np.nanmin(costs)
+    # we could catch an IndexError here, but if np.argwhere returns empty there is
+    # no way to handle model selection and hence no way to recover
+    min_role, min_bits = np.argwhere(costs == min_cost)[0]
+    min_model = factors[min_role][min_bits]
+    return min_model
 
-    return min_code
+
+def rescale_costs(costs: np.ndarray) -> np.ndarray:
+    """
+    Rescale the cost matrices for a fixed n_role so that
+     encoding and error costs are on the same scale
+    :param costs: matrix of costs with n_roles across roles and n_bits across columns
+    """
+    norms = np.linalg.norm(costs, axis=1)
+    norms[np.isnan(norms)] = 1.0
+    return costs / norms.reshape(costs.shape[0], 1)
 
 
 def get_role_factors(
@@ -99,16 +115,15 @@ def get_role_factors(
     :param n_roles: number of roles (rank of NMF decomposition)
     :param n_bits: number of bits to use for encoding factor matrices
     """
-
     n_bins = int(2**n_bits)
     V = features.values
-    G, F = get_nmf_factors(V, n_roles)
+    G, F = get_nmf_factorization(V, n_roles)
     G_encoded = encode(G, n_bins)
     F_encoded = encode(F, n_bins)
     return G_encoded, F_encoded
 
 
-def get_nmf_factors(
+def get_nmf_factorization(
     X: np.ndarray,
     n_roles: int
 ) -> FactorTuple:
@@ -152,25 +167,23 @@ def encode(
 
 def get_description_length(
     features: pd.DataFrame,
-    code: Tuple[np.ndarray, np.ndarray],
+    model: Tuple[np.ndarray, np.ndarray],
     n_bits: int
-) -> Tuple[float, float, float]:
+) -> Tuple[float, float]:
     """
-    Compute description length for encoding the code tuple (factor matrices)
+    Compute description length for encoding the model tuple (factor matrices)
      using the specified number of bins
     :param features: original DataFrame of features from which factors were computed
-    :param code: tuple of encoded NMF factors
+    :param model: tuple of encoded NMF factors
     :param n_bits: number of bits used for encoding
     """
-
-    G_encoded, F_encoded = code
+    G_encoded, F_encoded = model
     V_approx = G_encoded @ F_encoded
     V = features.values
 
     encoding_cost = n_bits * (G_encoded.size + F_encoded.size)
     error_cost = get_error_cost(V, V_approx)
-    total_cost = encoding_cost + error_cost
-    return (total_cost, encoding_cost, error_cost)
+    return encoding_cost, error_cost
 
 
 def get_error_cost(
@@ -187,24 +200,3 @@ def get_error_cost(
     vec2 = V_approx.ravel()
     kl_div = np.sum(np.where(vec1 != 0, vec1 * np.log(vec1 / vec2) - vec1 + vec2, 0))
     return kl_div
-
-
-def report_cost(
-    roles: int,
-    bits: int, 
-    cost: float, 
-    cost_components: Tuple[float, float]
-) -> None:
-    """
-    Helper for reporting description length cost while iterating to find minimum
-    :param roles: number of roles used (rank of NMF decomposition)
-    :param bits: number of bits used to encode NMF factors
-    :param cost: cost of the encoding (description length)
-    :param cost_components: encoding and error cost components of description length
-    """
-    info = f'roles={roles}, bits={bits}: cost={cost:.2f}'
-    #if cost < np.inf:
-    if not np.isnan(cost):
-        encoding_cost, error_cost = cost_components
-        info += f' (encoding={encoding_cost:.2f}, error={error_cost:.2f})'
-    print(info)
