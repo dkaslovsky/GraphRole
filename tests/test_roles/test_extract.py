@@ -21,7 +21,17 @@ class TestRoles(unittest.TestCase):
         self.features = pd.DataFrame(data, columns=feature_names, index=node_names)
 
     def test_init(self):
-        pass
+        # default args
+        self.assertIsNone(self.re.n_roles)
+        self.assertTupleEqual((self.re.min_roles, self.re.max_roles), self.re.N_ROLE_RANGE)
+        self.assertTupleEqual((self.re.min_bits, self.re.max_bits), self.re.N_BIT_RANGE)
+        # specify n_roles
+        self.re = RoleExtractor(n_roles=5)
+        self.assertEqual(self.re.n_roles, 5)
+        # specify ranges
+        self.re = RoleExtractor(n_role_range=(3, 5), n_bit_range=(2, 6))
+        self.assertTupleEqual((self.re.min_roles, self.re.max_roles), (3, 5))
+        self.assertTupleEqual((self.re.min_bits, self.re.max_bits), (2, 6))
 
     def test_extract_role_factors(self):
         # test with fixed n_roles; model selection tests will test n_roles=None
