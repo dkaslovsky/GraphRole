@@ -7,6 +7,7 @@ import pandas as pd
 
 
 VectorLike = Union[np.array, pd.Series]
+MatrixLike = Union[pd.DataFrame, np.ndarray]
 DataFrameLike = Union[pd.DataFrame, pd.Series]
 
 # node of a graph is labeled by a string or an int
