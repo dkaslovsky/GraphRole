@@ -45,7 +45,7 @@ class RoleExtractor:
             return role_df.to_dict()
         except AttributeError:
             return None
-    
+
     @property
     def role_percentage(self) -> Optional[DataFrameLike]:
         """
@@ -55,7 +55,7 @@ class RoleExtractor:
             return self.node_role_factor.apply(lambda row: row / row.sum(), axis=1)
         except AttributeError:
             return None
-    
+
     def extract_role_factors(
         self,
         features: pd.DataFrame,

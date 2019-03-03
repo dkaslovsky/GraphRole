@@ -13,6 +13,8 @@ try:
 except ImportError:
     skip_igraph_tests = True
 
+np.random.seed(0)
+
 
 # pylint: disable=protected-access
 
@@ -129,7 +131,7 @@ class BaseRecursiveFeatureExtractorTest:
                     index=existing_features.index
                 ),
                 pd.DataFrame(
-                    np.random.rand(existing_features.shape[0], 2),
+                    abs(np.random.randn(existing_features.shape[0], 2)),
                     columns=['a', 'b'],
                     index=existing_features.index
                 )

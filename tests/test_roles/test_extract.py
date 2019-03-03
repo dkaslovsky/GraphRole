@@ -5,6 +5,8 @@ import pandas as pd
 
 from graphrole.roles.extract import RoleExtractor
 
+np.random.seed(0)
+
 
 # pylint: disable=protected-access
 
@@ -61,24 +63,24 @@ class TestRoles(unittest.TestCase):
         expected_roles = {
             'a': 'role_0',
             'b': 'role_2',
-            'c': 'role_1',
-            'd': 'role_0',
+            'c': 'role_0',
+            'd': 'role_1',
         }
         expected_role_pct = pd.DataFrame.from_dict(
             {
-                'a': {'role_0': 0.561461, 'role_1': 0.000000, 'role_2': 0.438539},
-                'b': {'role_0': 0.050407, 'role_1': 0.188414, 'role_2': 0.761179},
-                'c': {'role_0': 0.269706, 'role_1': 0.730294, 'role_2': 0.000000},
-                'd': {'role_0': 1.000000, 'role_1': 0.000000, 'role_2': 0.000000},
+                'a': {'role_0': 1.00, 'role_1': 0.00, 'role_2': 0.00},
+                'b': {'role_0': 0.24, 'role_1': 0.23, 'role_2': 0.53},
+                'c': {'role_0': 0.63, 'role_1': 0.00, 'role_2': 0.37},
+                'd': {'role_0': 0.39, 'role_1': 0.61, 'role_2': 0.00},
             },
-            orient='index'
+            orient='index',
         )
         self.re = RoleExtractor(n_roles=3)
         self.re.extract_role_factors(features)
         roles = self.re.roles
         role_pct = self.re.role_percentage
         self.assertDictEqual(roles, expected_roles)
-        pd.testing.assert_frame_equal(role_pct.round(2), expected_role_pct.round(2))
+        pd.testing.assert_frame_equal(role_pct.round(2), expected_role_pct)
 
     def test_explain(self):
         with self.assertRaises(NotImplementedError):

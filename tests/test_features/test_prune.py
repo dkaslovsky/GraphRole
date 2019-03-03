@@ -5,6 +5,9 @@ import pandas as pd
 
 from graphrole.features.prune import FeaturePruner, vertical_log_binning
 
+np.random.seed(0)
+
+
 # pylint: disable=protected-access
 
 class TestVerticalLogBinning(unittest.TestCase):

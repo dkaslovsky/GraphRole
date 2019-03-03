@@ -4,6 +4,8 @@ import numpy as np
 
 import graphrole.roles.description_length as dl
 
+np.random.seed(0)
+
 
 class TestDescriptionLength(unittest.TestCase):
 
