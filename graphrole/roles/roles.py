@@ -97,7 +97,7 @@ class RoleExtractor:
 
                 try:
                     model = self._get_encoded_role_factors(features, roles, bits)
-                    encoding_cost, error_cost = get_description_length_costs(features, model, bits)
+                    encoding_cost, error_cost = get_description_length_costs(features, model)
                 except ValueError:
                     # raised when bits is too large to quantize the number of samples
                     continue
@@ -143,6 +143,5 @@ class RoleExtractor:
         encoding and error costs are on the same scale
         :param costs: matrix of costs with n_roles across roles and n_bits across columns
         """
-        norms = np.linalg.norm(costs, axis=1)
-        norms[np.isnan(norms)] = 1.0
-        return costs / norms.reshape(costs.shape[0], 1)
+        norms_skip_nan = np.sqrt(np.nansum(np.square(costs), axis=1))
+        return costs / norms_skip_nan.reshape(costs.shape[0], 1)
