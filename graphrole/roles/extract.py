@@ -46,7 +46,7 @@ class RoleExtractor:
             # factors will be of shape (n_nodes x n_roles) and (n_roles x n_features) for
             # a total of n_roles * (n_nodes + n_features), so encode with approximately
             # log2(n_roles * (n_nodes + n_features)) bits
-            n_bits = int(np.log2(self.n_roles * sum(features.shape)))
+            n_bits = int(np.log2(self.n_roles * min(features.shape)))
             node_role_ndarray, role_feature_ndarray = self._get_encoded_role_factors(
                 features, self.n_roles, n_bits
             )
@@ -68,6 +68,9 @@ class RoleExtractor:
             index=role_labels,
             columns=features.columns
         )
+    
+    def explain(self):
+        raise NotImplementedError('Role explanation (\"sense making\") is not yet implemented.')
 
     def _select_model(
         self,
