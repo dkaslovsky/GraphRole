@@ -37,6 +37,9 @@ class RoleExtractor:
 
     @property
     def roles(self) -> Optional[Dict[Node, float]]:
+        """
+        Return dict mapping node to role
+        """
         try:
             role_df = self.node_role_factor.idxmax(axis=1)
             return role_df.to_dict()
@@ -45,6 +48,9 @@ class RoleExtractor:
     
     @property
     def role_percentage(self) -> Optional[DataFrameLike]:
+        """
+        Return DataFrameLike with percent role (columns) for each node (index)
+        """
         try:
             return self.node_role_factor.apply(lambda row: row / row.sum(), axis=1)
         except AttributeError:
