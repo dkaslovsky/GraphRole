@@ -14,8 +14,6 @@ except ImportError:
     skip_igraph_tests = True
 
 
-np.random.seed(0)
-
 # pylint: disable=protected-access
 
 class TestAsFrame(unittest.TestCase):

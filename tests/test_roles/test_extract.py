@@ -5,8 +5,6 @@ import pandas as pd
 
 from graphrole.roles.extract import RoleExtractor
 
-np.random.seed(0)
-
 
 # pylint: disable=protected-access
 

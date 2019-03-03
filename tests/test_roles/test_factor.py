@@ -4,8 +4,6 @@ import numpy as np
 
 import graphrole.roles.factor as fctr
 
-np.random.seed(0)
-
 
 class TestFactor(unittest.TestCase):
 
