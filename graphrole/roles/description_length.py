@@ -8,14 +8,12 @@ from graphrole.types import FactorTuple, MatrixLike
 def get_description_length_costs(
     V: MatrixLike,
     model: FactorTuple,
-    n_bits: int,
 ) -> Tuple[float, float]:
     """
     Compute description length for encoding the model tuple (factor matrices)
      using the specified number of bits
     :param V: original matrix of features from which factors were computed
     :param model: tuple of encoded NMF factors
-    :param n_bits: number of bits used for encoding
     """
     G_encoded, F_encoded = model
     V_approx = G_encoded @ F_encoded
@@ -26,16 +24,20 @@ def get_description_length_costs(
         V_orig = V
 
     return (
-        get_encoding_cost(model, n_bits),
+        get_encoding_cost(model),
         get_error_cost(V_orig, V_approx)
     )
 
 
 def get_encoding_cost(
     model: FactorTuple,
-    n_bits: int,
 ) -> float:
     G_encoded, F_encoded = model
+    # estimate encoding bits
+    G_vals = len(np.unique(G_encoded))
+    F_vals = len(np.unique(F_encoded))
+    n_bins = max(G_vals, F_vals)
+    n_bits = np.ceil(np.log2(n_bins))
     return n_bits * (G_encoded.size + F_encoded.size)
 
 
