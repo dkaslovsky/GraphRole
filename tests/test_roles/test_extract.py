@@ -50,6 +50,36 @@ class TestRoles(unittest.TestCase):
             self.assertSetEqual(set(self.re.role_feature_factor.index), expected_roles)
             self.assertSetEqual(set(self.re.role_feature_factor.columns), expected_features)
 
+    def test_roles(self):
+        # return None when extract_role_factors has not yet been called
+        roles = self.re.roles
+        role_pct = self.re.role_percentage
+        self.assertIsNone(roles)
+        self.assertIsNone(role_pct)
+        # extract role factors so roles should be populated
+        features = pd.DataFrame(np.random.rand(4, 6), index='a b c d'.split())
+        expected_roles = {
+            'a': 'role_0',
+            'b': 'role_2',
+            'c': 'role_1',
+            'd': 'role_0',
+        }
+        expected_role_pct = pd.DataFrame.from_dict(
+            {
+                'a': {'role_0': 0.561461, 'role_1': 0.000000, 'role_2': 0.438539},
+                'b': {'role_0': 0.050407, 'role_1': 0.188414, 'role_2': 0.761179},
+                'c': {'role_0': 0.269706, 'role_1': 0.730294, 'role_2': 0.000000},
+                'd': {'role_0': 1.000000, 'role_1': 0.000000, 'role_2': 0.000000},
+            },
+            orient='index'
+        )
+        self.re = RoleExtractor(n_roles=3)
+        self.re.extract_role_factors(features)
+        roles = self.re.roles
+        role_pct = self.re.role_percentage
+        self.assertDictEqual(roles, expected_roles)
+        pd.testing.assert_frame_equal(role_pct.round(2), expected_role_pct.round(2))
+
     def test_explain(self):
         with self.assertRaises(NotImplementedError):
             self.re.explain()

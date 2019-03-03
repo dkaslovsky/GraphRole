@@ -1,17 +1,17 @@
 from collections import defaultdict
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 from graphrole.roles.description_length import get_description_length_costs
 from graphrole.roles.factor import encode, get_nmf_decomposition
-from graphrole.types import FactorTuple
+from graphrole.types import DataFrameLike, FactorTuple, Node
 
 
 class RoleExtractor:
 
-    """ DOCSTRING """
+    """ Assign node roles based on input features """
 
     N_ROLE_RANGE = (2, 8)
     N_BIT_RANGE = (1, 8)
@@ -23,7 +23,9 @@ class RoleExtractor:
         n_bit_range: Optional[Tuple[int, int]] = None,
     ) -> None:
         """
-        DOCSTRING
+        :param n_roles: optional number of roles to select; default uses MDL model selection
+        :param n_role_range: optional tuple for (min, max) roles for model selection grid search
+        :param n_bit_range: optional tuple for (min, max) bits for model selection grid search
         """
         self.n_roles = n_roles
 
@@ -33,6 +35,21 @@ class RoleExtractor:
         self.node_role_factor: Optional[pd.DataFrame] = None
         self.role_feature_factor: Optional[pd.DataFrame] = None
 
+    @property
+    def roles(self) -> Optional[Dict[Node, float]]:
+        try:
+            role_df = self.node_role_factor.idxmax(axis=1)
+            return role_df.to_dict()
+        except AttributeError:
+            return None
+    
+    @property
+    def role_percentage(self) -> Optional[DataFrameLike]:
+        try:
+            return self.node_role_factor.apply(lambda row: row / row.sum(), axis=1)
+        except AttributeError:
+            return None
+    
     def extract_role_factors(
         self,
         features: pd.DataFrame,
