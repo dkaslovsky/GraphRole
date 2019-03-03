@@ -131,7 +131,7 @@ class BaseRecursiveFeatureExtractorTest:
                     index=existing_features.index
                 ),
                 pd.DataFrame(
-                    abs(np.random.randn(existing_features.shape[0], 2)),
+                    np.random.randn(existing_features.shape[0], 2),
                     columns=['a', 'b'],
                     index=existing_features.index
                 )
