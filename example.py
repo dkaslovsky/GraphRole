@@ -1,47 +1,52 @@
-import itertools as it
+import warnings
+from pprint import pprint
 
-import igraph as ig
+import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
+import seaborn as sns
 
-from graphrole.features.extract import RecursiveFeatureExtractor
-
-np.random.seed(0)
+from graphrole import RecursiveFeatureExtractor, RoleExtractor
 
 
-def get_edges(n_nodes, directed=False):
-    edge_generator = it.permutations if directed else it.combinations
-    all_edges = edge_generator(range(n_nodes), 2)
-    edges = [edge for edge in all_edges if np.random.rand() > 0.75]
-    return edges
-
-
-def build_networkx_graph(edges, directed=False):
-    graph_constructor = nx.DiGraph if directed else nx.Graph    
-    return graph_constructor(edges)
-
-
-def build_igraph_graph(edges, directed=False):
-    # TODO: directed?
-    n_nodes = 1 + max(it.chain.from_iterable(edges))
-    graph = ig.Graph(n_nodes)
-    graph.add_edges(edges)
-    return graph
-
+# pylint: disable=invalid-name
 
 if __name__ == '__main__':
 
-    edges = get_edges(20)
+    # load the well known karate_club_graph from Networkx
+    G = nx.karate_club_graph()
 
-    nG = build_networkx_graph(edges)
-    iG = build_igraph_graph(edges)
+    # extract features
+    feature_extractor = RecursiveFeatureExtractor(G)
+    features = feature_extractor.extract_features()
+    print(f'\nFeatures extracted from {feature_extractor.generation_count} recursive generations:')
+    print(features)
 
-    rfe = RecursiveFeatureExtractor(nG, max_generations=10)
-    features = rfe.extract_features()
-    print('networkx')
-    print(features.T)
+    # assign node roles
+    role_extractor = RoleExtractor(n_roles=None)
+    role_extractor.extract_role_factors(features)
+    node_roles = role_extractor.roles
+    print('\nNode role assignments:')
+    pprint(node_roles)
+    print('\nNode role membership by percentage:')
+    print(role_extractor.role_percentage.round(2))
 
-    rfe = RecursiveFeatureExtractor(iG, max_generations=10)
-    features = rfe.extract_features()
-    print('igraph')
-    print(features.T)
+    # build color palette for plotting
+    unique_roles = set(node_roles.values())
+    color_map = sns.color_palette('Paired', n_colors=len(unique_roles))
+    # map roles to colors
+    role_colors = {role: color_map[i] for i, role in enumerate(unique_roles)}
+    # build list of colors for all nodes in G
+    node_colors = [role_colors[node_roles[node]] for node in G.nodes]
+
+    # plot graph
+    plt.figure()
+    with warnings.catch_warnings():
+        # catch matplotlib deprecation warning
+        warnings.simplefilter('ignore')
+        nx.draw(
+            G,
+            pos=nx.spring_layout(G),
+            with_labels=True,
+            node_color=node_colors,
+        )
+    plt.show()
