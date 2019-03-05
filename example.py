@@ -31,7 +31,7 @@ if __name__ == '__main__':
     print(role_extractor.role_percentage.round(2))
 
     # build color palette for plotting
-    unique_roles = set(node_roles.values())
+    unique_roles = sorted(set(node_roles.values()))
     color_map = sns.color_palette('Paired', n_colors=len(unique_roles))
     # map roles to colors
     role_colors = {role: color_map[i] for i, role in enumerate(unique_roles)}
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         warnings.simplefilter('ignore')
         nx.draw(
             G,
-            pos=nx.spring_layout(G),
+            pos=nx.spring_layout(G, seed=42),
             with_labels=True,
             node_color=node_colors,
         )
