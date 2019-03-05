@@ -23,9 +23,10 @@ $ python setup.py install
 ```
 
 ### Example Usage
-An example of `GraphRole` usage is found in the `examples` directory.  The notebook [example.ipynb](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/example.ipynb) walks through feature extraction and role assignment for the well-knwon `karate_club_graph` that comes included with `Networkx`.
+An example of `GraphRole` usage is found in the `examples` directory.  The notebook [example.ipynb](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/example.ipynb) walks through feature extraction and role assignment for the well-known `karate_club_graph` that comes included with `Networkx`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown below with each node colored corresponding to its role.
+<img src="./examples/karate_graph.png">
 
-Begin by importing the two feature and role extraction classes:
+For general usage, begin by importing the two feature and role extraction classes:
 ```
 >>> from graphrole import RecursiveFeatureExtractor, RoleExtractor
 ```
@@ -43,7 +44,7 @@ Alternatively, `n_roles` can be set to a desired number of roles to be extracted
 ```
 The role assignment for each node can be retrieved as a dictionary:
 ```
->>> node_roles = role_extractor.roles
+>>> role_extractor.roles
 ```
 Alternatively, roles can be viewed as a soft assignment and a node's percent membership to each role
 can be retrieved as a `pandas.DataFrame`:
