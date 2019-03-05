@@ -14,18 +14,12 @@ A fundamental problem for learning on graphs is extracting meaningful features. 
 
 Please see [1, 2] for more technical details.
 
-### Installation
-This package is not yet hosted on PyPI.  To install from source, clone this repo and run the `setup.py` script:
-```
-$ git clone https://github.com/dkaslovsky/GraphRole.git
-$ cd GraphRole
-$ python setup.py install
-```
-
-### Example Usage
+### Example
 An example of `GraphRole` usage is found in the `examples` directory.  The notebook [example.ipynb](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/example.ipynb) walks through feature extraction and role assignment for the well-known `karate_club_graph` that comes included with `Networkx`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown below with each node colored corresponding to its role.
 <img src="./examples/karate_graph.png">
+The roles reflect structural properties of the graph at the node level.  The nodes `0` and `33` (dark green) are central to the graph and are connected to many other nodes.  Nodes `1`, `2`, `3`, and `32` are assigned to a similar role (red).  In contrast, the roles colored as dark blue, light blue, and pink are found at the periphery of the graph.  Notably, nodes need not be near one another to be assigned to the same role; instead nodes with similar properties are grouped together across the graph by their role assignments.
 
+### Usage
 For general usage, begin by importing the two feature and role extraction classes:
 ```
 >>> from graphrole import RecursiveFeatureExtractor, RoleExtractor
@@ -52,7 +46,6 @@ can be retrieved as a `pandas.DataFrame`:
 >>> role_extractor.role_percentage
 ```
 
-
 ### Graph Interfaces
 An interface for graph data structures is provided in the `graphrole.graph.interface` module.  Implementations for `networkx` and `igraph` are included.
 
@@ -76,6 +69,15 @@ Features yet to be implemented include:
 * Sense-making (model explanation) to the role extraction module
 * Support directed and weighted graphs
 * Support for reading graph from text file
+
+
+### Installation
+This package is not yet hosted on PyPI.  To install from source, clone this repo and run the `setup.py` script:
+```
+$ git clone https://github.com/dkaslovsky/GraphRole.git
+$ cd GraphRole
+$ python setup.py install
+```
 
 ### Tests
 To run tests:
