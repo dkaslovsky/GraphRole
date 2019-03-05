@@ -16,7 +16,7 @@ def get_nmf_decomposition(
     :param X: matrix to factor
     :param n_roles: rank of decomposition
     """
-    nmf = NMF(n_components=n_roles, solver='mu')
+    nmf = NMF(n_components=n_roles, solver='mu', init='nndsvda')
     with warnings.catch_warnings():
         # ignore convergence warning from NMF since
         # this will result in a large cost anyways
@@ -38,7 +38,7 @@ def encode(
     # quantize using Lloyd-Max quantizier which can be computed using kmeans
     # https://en.wikipedia.org/wiki/Quantization_(signal_processing)
     data = X.reshape(X.size, 1)
-    quantizer = KMeans(n_clusters=n_bins)
+    quantizer = KMeans(n_clusters=n_bins, random_state=1)
     with warnings.catch_warnings():
         # ignore convergence warning from kmeans since
         # this will result in a large cost anyways
