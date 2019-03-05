@@ -15,7 +15,10 @@ A fundamental problem for learning on graphs is extracting meaningful features. 
 Please see [1, 2] for more technical details.
 
 ### Example
-An example of `GraphRole` usage is found in the `examples` directory.  The notebook [example.ipynb](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/example.ipynb) walks through feature extraction and role assignment for the well-known `karate_club_graph` that comes included with `Networkx`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown below with each node colored corresponding to its role.
+An example of `GraphRole` usage is found in the `examples` directory.  The notebook
+[example.ipynb](./examples/example.ipynb)
+(or on [nbviewer](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/examples/example.ipynb))
+walks through feature extraction and role assignment for the well-known `karate_club_graph` that comes included with `Networkx`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown below with each node colored corresponding to its role.
 <img src="./examples/karate_graph.png">
 The roles reflect structural properties of the graph at the node level.  The nodes `0` and `33` (dark green) are central to the graph and are connected to many other nodes.  Nodes `1`, `2`, `3`, and `32` are assigned to a similar role (red).  In contrast, the roles colored as dark blue, light blue, and pink are found at the periphery of the graph.  Notably, nodes need not be near one another to be assigned to the same role; instead nodes with similar properties are grouped together across the graph by their role assignments.
 
