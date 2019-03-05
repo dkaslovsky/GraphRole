@@ -10,7 +10,7 @@ Automatic feature extraction and node role assignment for transfer learning on g
 ### Overview
 A fundamental problem for learning on graphs is extracting meaningful features.  `GraphRole` provides the `RecursiveFeatureExtractor` class to automate this process by extracting recursive features capturing local and neighborhood ("regional") structural properties of a given graph.  The specific implementation follows that of the ReFeX algorithm [1].  Node features (e.g., degree) and ego-net features (e.g., neighbors, number of internal vs. external edges) are extracted and then recursively aggregated over each node's neighbors' features until no additional information is encoded.  As is shown in [1], these recursive, "regional" features facilitate node classification and perform quite well in transfer learning tasks.
 
-`GraphRole` also provides the `extract_role_factors` function for node role assignment (a form of classification).  Different nodes play different structural roles in a graph, and using recursive regional features, these roles can be identified and assigned to collections of nodes.  As they are structural in nature, node roles differ from and are often more intuitive than the commonly used communities of nodes.  In particular, roles can generalize across graphs whereas the notion of communities cannot [2].  Identification and assignment of node roles has been shown to facilitate many graph learning tasks.
+`GraphRole` also provides the `RoleExtractor` class for node role assignment (a form of classification).  Different nodes play different structural roles in a graph, and using recursive regional features, these roles can be identified and assigned to collections of nodes.  As they are structural in nature, node roles differ from and are often more intuitive than the commonly used communities of nodes.  In particular, roles can generalize across graphs whereas the notion of communities cannot [2].  Identification and assignment of node roles has been shown to facilitate many graph learning tasks.
 
 Please see [1, 2] for more technical details.
 
@@ -23,7 +23,33 @@ $ python setup.py install
 ```
 
 ### Example Usage
-Examples go here.
+An example of `GraphRole` usage is found in the `examples` directory.  The notebook [example.ipynb](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/example.ipynb) walks through feature extraction and role assignment for the well-knwon `karate_club_graph` that comes included with `Networkx`.
+
+Begin by importing the two feature and role extraction classes:
+```
+>>> from graphrole import RecursiveFeatureExtractor, RoleExtractor
+```
+Features are then extracted from a graph `G` into a `pandas.DataFrame`:
+```
+>>> feature_extractor = RecursiveFeatureExtractor(G)
+>>> features = feature_extractor.extract_features()
+```
+Next, these features are used to learn roles.  The number of roles is automatically determined by
+a model selection procedure when `n_roles=None` is passed to the `RoleExtractor` class instance.
+Alternatively, `n_roles` can be set to a desired number of roles to be extracted.
+```
+>>> role_extractor = RoleExtractor(n_roles=None)
+>>> role_extractor.extract_role_factors(features)
+```
+The role assignment for each node can be retrieved as a dictionary:
+```
+>>> node_roles = role_extractor.roles
+```
+Alternatively, roles can be viewed as a soft assignment and a node's percent membership to each role
+can be retrieved as a `pandas.DataFrame`:
+```
+>>> role_extractor.role_percentage
+```
 
 
 ### Graph Interfaces
