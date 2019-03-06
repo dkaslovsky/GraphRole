@@ -7,6 +7,10 @@
 
 Automatic feature extraction and node role assignment for transfer learning on graphs; based on the ReFeX/RolX algorithms [1, 2] of Henderson, et al.
 
+<p align="center">
+<img src="./examples/karate_graph.png" width=600>
+</p>
+
 ### Overview
 A fundamental problem for learning on graphs is extracting meaningful features.  `GraphRole` provides the `RecursiveFeatureExtractor` class to automate this process by extracting recursive features capturing local and neighborhood ("regional") structural properties of a given graph.  The specific implementation follows that of the ReFeX algorithm [1].  Node features (e.g., degree) and ego-net features (e.g., neighbors, number of internal vs. external edges) are extracted and then recursively aggregated over each node's neighbors' features until no additional information is encoded.  As is shown in [1], these recursive, "regional" features facilitate node classification and perform quite well in transfer learning tasks.
 
@@ -17,10 +21,10 @@ Please see [1, 2] for more technical details.
 ### Example
 An example of `GraphRole` usage is found in the `examples` directory.  The notebook
 [example.ipynb](./examples/example.ipynb)
-(or on [nbviewer](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/examples/example.ipynb))
-walks through feature extraction and role assignment for the well-known `karate_club_graph` that comes included with `Networkx`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown below with each node colored corresponding to its role.
-<img src="./examples/karate_graph.png">
-The roles reflect structural properties of the graph at the node level.  The nodes `0` and `33` (dark green) are central to the graph and are connected to many other nodes.  Nodes `1`, `2`, `3`, and `32` are assigned to a similar role (red).  In contrast, the roles colored as dark blue, light blue, and pink are found at the periphery of the graph.  Notably, nodes need not be near one another to be assigned to the same role; instead nodes with similar properties are grouped together across the graph by their role assignments.
+(also available via [nbviewer](https://nbviewer.jupyter.org/github/dkaslovsky/GraphRole/blob/master/examples/example.ipynb))
+walks through feature extraction and role assignment for the well-known `karate_club_graph` that is included with `NetworkX`.  Recursive features are extracted and used to learn role assignments for each node in the graph.  The graph is shown above with each node colored corresponding to its role.
+
+The extracted roles reflect structural properties of the graph at the node level.  The nodes `0` and `33` (dark green) are central to the graph and are connected to many other nodes.  Nodes `1`, `2`, `3`, and `32` are assigned to a similar role (red).  In contrast, the roles colored as dark blue, light blue, and pink are found at the periphery of the graph.  Notably, nodes need not be near one another to be assigned to the same role; instead nodes with similar properties are grouped together across the graph by their role assignments.
 
 ### Usage
 For general usage, begin by importing the two feature and role extraction classes:
@@ -71,7 +75,6 @@ Worth noting is that `requirements.txt` will likely be changing as development c
 Features yet to be implemented include:
 * Sense-making (model explanation) to the role extraction module
 * Support directed and weighted graphs
-* Support for reading graph from text file
 
 
 ### Installation
