@@ -121,7 +121,12 @@ class RecursiveFeatureExtractor:
         :param features: candidate features from current recursive generation
         """
         # add features
-        self._features = pd.concat([self._features, features], axis=1, sort=True)
+        self._features = (
+            pd.concat([self._features, features], axis=1, sort=True)
+            # fill nans resulting from concatenation where features does not
+            # contain neighborless nodes (out-degree=0) on its axis
+            .fillna(0)
+        )
         # prune redundant features
         pruner = FeaturePruner(self._final_features, self._feature_group_thresh)
         features_to_drop = pruner.prune_features(self._features)
