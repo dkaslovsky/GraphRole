@@ -16,6 +16,7 @@ class NetworkxInterface(BaseGraphInterface):
         :param G: Networkx Graph
         """
         self.G = G
+        self.directed = G.is_directed()
 
     def get_num_edges(self) -> int:
         """
@@ -39,6 +40,15 @@ class NetworkxInterface(BaseGraphInterface):
         """
         Return local features for each node in the graph
         """
+        if self.directed:
+            return pd.DataFrame(
+                {
+                    'in_degree': dict(self.G.in_degree()),
+                    'out_degree': dict(self.G.out_degree),
+                    'total_degree': dict(self.G.degree),
+                }
+            )
+
         return pd.DataFrame.from_dict(
             dict(self.G.degree),
             orient='index',

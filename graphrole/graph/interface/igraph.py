@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Iterable, List, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 import igraph as ig
 import pandas as pd
@@ -17,6 +17,7 @@ class IgraphInterface(BaseGraphInterface):
         :param G: igraph Graph
         """
         self.G = G
+        self.directed = G.is_directed()
 
     def get_num_edges(self) -> int:
         """
@@ -34,15 +35,23 @@ class IgraphInterface(BaseGraphInterface):
         """
         Return iterable of neighbors of specified node
         """
-        return self.G.neighbors(node)
+        return self.G.neighbors(node, mode='out')
 
     def _get_local_features(self) -> pd.DataFrame:
         """
         Return local features for each node in the graph
         """
-        degree_dict = {vertex.index: vertex.degree() for vertex in self.G.vs()}
+        if self.directed:
+            return pd.DataFrame(
+                {
+                    'in_degree': self._get_degree_dict(mode='in'),
+                    'out_degree': self._get_degree_dict(mode='out'),
+                    'total_degree': self._get_degree_dict(),
+                }
+            )
+
         return pd.DataFrame.from_dict(
-            degree_dict,
+            self._get_degree_dict(),
             orient='index',
             columns=['degree']
         )
@@ -53,7 +62,7 @@ class IgraphInterface(BaseGraphInterface):
         """
         egonet_features = {}
         for node in self.get_nodes():
-            ego_nodes = self.G.neighborhood(node, order=1)
+            ego_nodes = self.G.neighborhood(node, order=1, mode='out')
             ego = self.G.induced_subgraph(ego_nodes)
             features = {
                 'internal_edges': len(ego.es()),
@@ -61,6 +70,16 @@ class IgraphInterface(BaseGraphInterface):
             }
             egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')
+
+    def _get_degree_dict(self, mode: Optional[str] = None) -> Dict[Node, int]:
+        """
+        Return the mapping of node index to the degree of the node
+        :param mode: type of degree ("in", "out", or None for total)
+        """
+        return {
+            vertex.index: vertex.degree(mode=mode)
+            for vertex in self.G.vs()
+        }
 
     def _get_edge_boundary(self, interior_vertex_ids: List[Node]) -> List[Edge]:
         """
@@ -73,8 +92,7 @@ class IgraphInterface(BaseGraphInterface):
         _is_boundary = partial(self._is_boundary, interior=interior, exterior=exterior)
         return [edge.tuple for edge in self.G.es() if _is_boundary(edge.tuple)]
 
-    @staticmethod
-    def _is_boundary(edge: Edge, interior: Set[Node], exterior: Set[Node]) -> bool:
+    def _is_boundary(self, edge: Edge, interior: Set[Node], exterior: Set[Node]) -> bool:
         """
         Return True if edge is on the boundary of the interior and exterior vertex sets (else False)
         :param edge: edge to evaluate
@@ -82,6 +100,10 @@ class IgraphInterface(BaseGraphInterface):
         :param exterior: set of vertex ids
         """
         v1, v2 = edge
+
+        if self.directed:
+            return v1 in interior and v2 in exterior
+
         return (
             (v1 in interior and v2 in exterior)
             or
