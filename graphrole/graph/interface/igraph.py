@@ -1,4 +1,5 @@
 from functools import partial
+from operator import itemgetter
 from typing import Dict, Iterable, List, Optional, Set
 
 import igraph as ig
@@ -101,10 +102,11 @@ class IgraphInterface(BaseGraphInterface):
         :param mode: 'out' for out_degree, 'in' for in_degree, None for total
         """
         if self.directed and mode:
-            return {
-                'out': sum(weight for (src, _), weight in self.edge_weights.items() if node == src),
-                'in': sum(weight for (_, tgt), weight in self.edge_weights.items() if node == tgt),
+            getter = {
+                'out': itemgetter(0),  # get source node in edge tuple
+                'in': itemgetter(1),   # get target node in edge tuple
             }[mode]
+            return sum(weight for edge, weight in self.edge_weights.items() if node == getter(edge))
         return sum(weight for edge, weight in self.edge_weights.items() if node in edge)
 
     def _get_edge_sum_from_nodes(self, nodes: Iterable[Node]) -> float:
