@@ -4,7 +4,7 @@ import networkx as nx
 import pandas as pd
 
 from graphrole.graph.interface import BaseGraphInterface
-from graphrole.types import Node
+from graphrole.types import Edge, Node
 
 
 class NetworkxInterface(BaseGraphInterface):
@@ -43,14 +43,14 @@ class NetworkxInterface(BaseGraphInterface):
         if self.directed:
             return pd.DataFrame(
                 {
-                    'in_degree': dict(self.G.in_degree()),
-                    'out_degree': dict(self.G.out_degree),
-                    'total_degree': dict(self.G.degree),
+                    'in_degree': dict(self.G.in_degree(weight='weight')),
+                    'out_degree': dict(self.G.out_degree(weight='weight')),
+                    'total_degree': dict(self.G.degree(weight='weight')),
                 }
             )
 
         return pd.DataFrame.from_dict(
-            dict(self.G.degree),
+            dict(self.G.degree(weight='weight')),
             orient='index',
             columns=['degree']
         )
@@ -62,9 +62,20 @@ class NetworkxInterface(BaseGraphInterface):
         egonet_features = {}
         for node in self.G.nodes:
             ego = nx.ego_graph(self.G, node, radius=1)
-            features = {
-                'internal_edges': len(ego.edges),
-                'external_edges': len(list(nx.edge_boundary(self.G, ego.nodes)))
+            ego_boundary = list(nx.edge_boundary(self.G, ego.nodes))
+            egonet_features[node] = {
+                'internal_edges': self._get_edge_sum(ego.edges),
+                'external_edges': self._get_edge_sum(ego_boundary)
             }
-            egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')
+
+    def _get_edge_sum(self, edges: Iterable[Edge]) -> float:
+        """
+        Return weighted sum of edges (total number of edges if unweighted)
+        :param edges: edges to sum
+        """
+        return sum(
+            self.G.get_edge_data(*edge, default={})\
+             .get('weight', 1)
+            for edge in edges
+        )
