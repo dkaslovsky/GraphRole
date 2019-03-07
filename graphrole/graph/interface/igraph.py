@@ -18,6 +18,9 @@ class IgraphInterface(BaseGraphInterface):
         """
         self.G = G
         self.directed = G.is_directed()
+        self.weighted = G.is_weighted()
+        if self.weighted:
+            self.edge_weights = {edge.tuple: edge['weight'] for edge in self.G.es()}
 
     def get_num_edges(self) -> int:
         """
@@ -76,10 +79,28 @@ class IgraphInterface(BaseGraphInterface):
         Return the mapping of node index to the degree of the node
         :param mode: type of degree ("in", "out", or None for total)
         """
+        if self.weighted:
+            return {
+                vertex.index: self._get_edge_sum_from_node(vertex.index, mode=mode)
+                for vertex in self.G.vs()
+            }
         return {
             vertex.index: vertex.degree(mode=mode)
             for vertex in self.G.vs()
         }
+
+    def _get_edge_sum_from_node(self, node: Node, mode: Optional[str] = None) -> float:
+        """
+        Return weighted sum of edges from/to node
+        :param node: source/target node
+        :param mode: 'out' for out_degree, 'in' for in_degree, None for total
+        """
+        if self.directed and mode:
+            return {
+                'out': sum(weight for (src, _), weight in self.edge_weights.items() if node == src),
+                'in': sum(weight for (_, tgt), weight in self.edge_weights.items() if node == tgt),
+            }[mode]
+        return sum(weight for edge, weight in self.edge_weights.items() if node in edge)
 
     def _get_edge_boundary(self, interior_vertex_ids: List[Node]) -> List[Edge]:
         """
