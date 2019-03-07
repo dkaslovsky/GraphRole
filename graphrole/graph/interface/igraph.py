@@ -19,8 +19,11 @@ class IgraphInterface(BaseGraphInterface):
         self.G = G
         self.directed = G.is_directed()
         self.weighted = G.is_weighted()
-        if self.weighted:
-            self.edge_weights = {edge.tuple: edge['weight'] for edge in self.G.es()}
+
+        self.edge_weights = {
+            edge.tuple: edge.attributes().get('weight', 1)
+            for edge in self.G.es()
+        }
 
     def get_num_edges(self) -> int:
         """
@@ -66,13 +69,15 @@ class IgraphInterface(BaseGraphInterface):
         egonet_features = {}
         for node in self.get_nodes():
             ego_nodes = self.G.neighborhood(node, order=1, mode='out')
-            ego = self.G.induced_subgraph(ego_nodes)
+            ego_boundary = self._get_edge_boundary(ego_nodes)
             features = {
-                'internal_edges': len(ego.es()),
-                'external_edges': len(self._get_edge_boundary(ego_nodes))
+                'internal_edges': self._get_edge_sum_from_nodes(ego_nodes),
+                'external_edges': self._get_edge_sum_from_edges(ego_boundary),
             }
             egonet_features[node] = features
         return pd.DataFrame.from_dict(egonet_features, orient='index')
+
+    ### helpers ###
 
     def _get_degree_dict(self, mode: Optional[str] = None) -> Dict[Node, int]:
         """
@@ -81,7 +86,7 @@ class IgraphInterface(BaseGraphInterface):
         """
         if self.weighted:
             return {
-                vertex.index: self._get_edge_sum_from_node(vertex.index, mode=mode)
+                vertex.index: self._get_node_degree(vertex.index, mode=mode)
                 for vertex in self.G.vs()
             }
         return {
@@ -89,9 +94,9 @@ class IgraphInterface(BaseGraphInterface):
             for vertex in self.G.vs()
         }
 
-    def _get_edge_sum_from_node(self, node: Node, mode: Optional[str] = None) -> float:
+    def _get_node_degree(self, node: Node, mode: Optional[str] = None) -> float:
         """
-        Return weighted sum of edges from/to node
+        Return weighted sum of edges from/to node (weights are 1 if unweighted)
         :param node: source/target node
         :param mode: 'out' for out_degree, 'in' for in_degree, None for total
         """
@@ -101,6 +106,28 @@ class IgraphInterface(BaseGraphInterface):
                 'in': sum(weight for (_, tgt), weight in self.edge_weights.items() if node == tgt),
             }[mode]
         return sum(weight for edge, weight in self.edge_weights.items() if node in edge)
+
+    def _get_edge_sum_from_nodes(self, nodes: Iterable[Node]) -> float:
+        """
+        Return weighted sum of all edges between nodes
+        :param nodes: nodes to consider
+        """
+        return sum(
+            weight
+            for (src, tgt), weight in self.edge_weights.items()
+            if src in nodes and tgt in nodes
+        )
+
+    def _get_edge_sum_from_edges(self, edges: Iterable[Node]) -> float:
+        """
+        Return weighted sum of edges
+        :param nodes: edges to consider
+        """
+        return sum(
+            weight
+            for edge, weight in self.edge_weights.items()
+            if edge in edges
+        )
 
     def _get_edge_boundary(self, interior_vertex_ids: List[Node]) -> List[Edge]:
         """

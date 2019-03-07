@@ -69,6 +69,8 @@ class NetworkxInterface(BaseGraphInterface):
             }
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
+    ### helpers ###
+
     def _get_edge_sum(self, edges: Iterable[Edge]) -> float:
         """
         Return weighted sum of edges (total number of edges if unweighted)
