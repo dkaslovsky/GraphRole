@@ -10,13 +10,13 @@ with open('requirements.txt') as f:
 
 setup(
     name='GraphRole',
-    version='0.1.0',
+    version='1.0.0',
     author='Daniel Kaslovsky',
     author_email='dkaslovsky@gmail.com',
     license='MIT',
     description='Automatic feature extraction and node role assignment for transfer learning on graphs',
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type='text/markdown',
     packages=['graphrole'],
     install_requires=requirements,
     url='https://github.com/dkaslovsky/GraphRole',

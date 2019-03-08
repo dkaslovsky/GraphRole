@@ -74,7 +74,11 @@ by again trivially implementing a `setUpClass()` classmethod of a subclass of `B
 Model explanation ("sense making") will be added to the `RoleExtractor` class in a future release.
 
 ### Installation
-This package is not yet hosted on PyPI.  To install from source, clone this repo and run the `setup.py` script:
+This package is hosted on PyPI and can be installed via `pip`:
+```
+$ pip install graphrole
+```
+To instead install from source:
 ```
 $ git clone https://github.com/dkaslovsky/GraphRole.git
 $ cd GraphRole
