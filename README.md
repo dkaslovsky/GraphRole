@@ -26,6 +26,8 @@ walks through feature extraction and role assignment for the well-known `karate_
 
 The extracted roles reflect structural properties of the graph at the node level.  The nodes `0` and `33` (dark green) are central to the graph and are connected to many other nodes.  Nodes `1`, `2`, `3`, and `32` are assigned to a similar role (red).  In contrast, the roles colored as dark blue, light blue, and pink are found at the periphery of the graph.  Notably, nodes need not be near one another to be assigned to the same role; instead nodes with similar properties are grouped together across the graph by their role assignments.
 
+Although not reflected by this example, weighted and directed graphs are also supported and will yield weighted and directed variants of the extracted features.
+
 ### Usage
 For general usage, begin by importing the two feature and role extraction classes:
 ```
@@ -68,14 +70,8 @@ To add an implementation of an additional graph library or data structure:
 1. If desired, a similar procedure allows the feature extraction tests to be run using the added interface
 by again trivially implementing a `setUpClass()` classmethod of a subclass of `BaseRecursiveFeatureExtractorTest.TestCases` in the `tests.test_features.test_extract.py` module
 
-### W.I.P. Disclaimer
-This package is still a work in progress.
-Worth noting is that `requirements.txt` will likely be changing as development continues and this project may adopt the `pipenv` paradigm.
-
-Features yet to be implemented include:
-* Sense-making (model explanation) to the role extraction module
-* Support directed and weighted graphs
-
+### Future Development
+Model explanation ("sense making") will be added to the `RoleExtractor` class in a future release.
 
 ### Installation
 This package is not yet hosted on PyPI.  To install from source, clone this repo and run the `setup.py` script:
@@ -90,7 +86,7 @@ To run tests:
 ```
 $ python -m unittest discover -v
 ```
-As noted above, the tests for the `igraph` interface are skipped when `igraph` is not installed.  Because this package is intentionally not required, the  test coverage reported above is much lower than when `igraph` is installed and its interface tests are not skipped (__96% coverage__ to date).
+As noted above, the tests for the `igraph` interface are skipped when `igraph` is not installed.  Because this package is intentionally not required, the  test coverage reported above is much lower than when `igraph` is installed and its interface tests are not skipped (__97% coverage__ to date).
 
 ### References
 [1] Henderson, et al. [It’s Who You Know: Graph Mining Using Recursive Structural Features](http://www.cs.cmu.edu/~leili/pubs/henderson-kdd2011.pdf).
