@@ -18,6 +18,18 @@ A fundamental problem for learning on graphs is extracting meaningful features. 
 
 Please see [1, 2] for more technical details.
 
+### Installation
+This package is hosted on PyPI and can be installed via `pip`:
+```
+$ pip install graphrole
+```
+To instead install from source:
+```
+$ git clone https://github.com/dkaslovsky/GraphRole.git
+$ cd GraphRole
+$ python setup.py install
+```
+
 ### Example
 An example of `GraphRole` usage is found in the `examples` directory.  The notebook
 [example.ipynb](./examples/example.ipynb)
@@ -72,18 +84,6 @@ by again trivially implementing a `setUpClass()` classmethod of a subclass of `B
 
 ### Future Development
 Model explanation ("sense making") will be added to the `RoleExtractor` class in a future release.
-
-### Installation
-This package is hosted on PyPI and can be installed via `pip`:
-```
-$ pip install graphrole
-```
-To instead install from source:
-```
-$ git clone https://github.com/dkaslovsky/GraphRole.git
-$ cd GraphRole
-$ python setup.py install
-```
 
 ### Tests
 To run tests:
