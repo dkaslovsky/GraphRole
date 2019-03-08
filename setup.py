@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open('README.md') as f:
@@ -17,7 +17,7 @@ setup(
     description='Automatic feature extraction and node role assignment for transfer learning on graphs',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=['graphrole'],
+    packages=find_packages(),
     install_requires=requirements,
     url='https://github.com/dkaslovsky/GraphRole',
     keywords=[
