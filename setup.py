@@ -20,7 +20,10 @@ setup(
     packages=['graphrole'],
     install_requires=requirements,
     url='https://github.com/dkaslovsky/GraphRole',
-    keywords=['graph', 'feature extraction', 'transfer learning', 'network', 'graph analysis', 'network analysis'],
+    keywords=[
+        'graph', 'feature extraction', 'transfer learning', 'network',
+        'graph analysis', 'network analysis', 'refex', 'rolx',
+    ],
     classifiers=[
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
