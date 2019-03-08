@@ -41,12 +41,18 @@ class BaseGraphInterfaceTest:
 
         graph = None
         graph_empty = None
+        graph_directed_weighted = None
 
         nodes = range(7)
         edges = [
             (0, 1), (0, 2), (0, 3),
             (3, 6), (4, 5), (4, 6),
             (5, 6)
+        ]
+        weights = [
+            2, 1.5, 3,
+            0.25, 0.75, 2.5,
+            1
         ]
 
         def test_get_num_edges(self):
@@ -118,6 +124,43 @@ class BaseGraphInterfaceTest:
             result_features = self.graph.get_neighborhood_features()
             pd.testing.assert_frame_equal(result_features, expected_features)
 
+        def test_get_neighborhood_features_with_directed_weighted_graph(self):
+            features = [
+                pd.Series(
+                    {
+                        0: 0.00, 1: 2.00, 2: 1.50, 3: 3.00,
+                        4: 0.00, 5: 0.75, 6: 3.75
+                    }
+                ).rename('in_degree'),
+                pd.Series(
+                    {
+                        0: 6.50, 1: 0.00, 2: 0.00, 3: 0.25,
+                        4: 3.25, 5: 1.00, 6: 0.00
+                    }
+                ).rename('out_degree'),
+                pd.Series(
+                    {
+                        0: 6.50, 1: 2.00, 2: 1.50, 3: 3.25,
+                        4: 3.25, 5: 1.75, 6: 3.75
+                    }
+                ).rename('total_degree'),                
+                pd.Series(
+                    {
+                        0: 6.50, 1: 0.00, 2: 0.00, 3: 0.25,
+                        4: 4.25, 5: 1.00, 6: 0.00
+                    }
+                ).rename('internal_edges'),
+                pd.Series(
+                    {
+                        0: 0.25, 1: 0.00, 2: 0.00, 3: 0.00,
+                        4: 0.00, 5: 0.00, 6: 0.00
+                    }
+                ).rename('external_edges')
+            ]
+            expected_features = pd.concat(features, axis=1)
+            result_features = self.graph_directed_weighted.get_neighborhood_features()
+            pd.testing.assert_frame_equal(result_features, expected_features)
+
 
 class TestNetworkxInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
@@ -130,6 +173,11 @@ class TestNetworkxInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
 
         G = nx.Graph(cls.edges)
         cls.graph = interface.NetworkxInterface(G)
+
+        G_directed_weighted = nx.DiGraph()
+        for edge, weight in zip(cls.edges, cls.weights):
+            G_directed_weighted.add_edge(*edge, weight=weight)
+        cls.graph_directed_weighted = interface.NetworkxInterface(G_directed_weighted)
 
 
 class TestIgraphInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
@@ -149,3 +197,9 @@ class TestIgraphInterface(BaseGraphInterfaceTest.BaseGraphInterfaceTestCases):
         G.add_vertices(len(cls.nodes))
         G.add_edges(cls.edges)
         cls.graph = interface.IgraphInterface(G)
+
+        G_directed_weighted = ig.Graph(directed=True)
+        G_directed_weighted.add_vertices(len(cls.nodes))
+        for edge, weight in zip(cls.edges, cls.weights):
+            G_directed_weighted.add_edge(*edge, weight=weight)
+        cls.graph_directed_weighted = interface.IgraphInterface(G_directed_weighted)
