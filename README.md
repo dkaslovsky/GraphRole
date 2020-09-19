@@ -1,6 +1,6 @@
 # GraphRole
 
-[![Build Status](https://travis-ci.org/dkaslovsky/GraphRole.svg?branch=master)](https://travis-ci.org/dkaslovsky/GraphRole)
+[![Build Status](https://travis-ci.com/dkaslovsky/GraphRole.svg?branch=master)](https://travis-ci.com/dkaslovsky/GraphRole)
 [![Coverage Status](https://coveralls.io/repos/github/dkaslovsky/GraphRole/badge.svg?branch=master)](https://coveralls.io/github/dkaslovsky/GraphRole?branch=master)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/GraphRole)
 
