@@ -77,7 +77,6 @@ class NetworkxInterface(BaseGraphInterface):
         :param edges: edges to sum
         """
         return sum(
-            self.G.get_edge_data(*edge, default={})\
-             .get('weight', 1)
+            self.G.get_edge_data(*edge, default={}).get('weight', 1)
             for edge in edges
         )
