@@ -53,5 +53,9 @@ def get_error_cost(
     # KL divergence as given in section 2.3 of RolX paper
     vec1 = V.ravel()
     vec2 = V_approx.ravel()
-    kl_div = np.sum(np.where(vec1 != 0, vec1 * np.log(vec1 / vec2) - vec1 + vec2, 0))
+
+    # use mask in np.log to avoid runtime warning for zeros and in np.where to ensure correct value
+    mask = vec1 != 0
+    log_vals = np.log(vec1 / vec2, where=mask, out=np.zeros(vec1.shape))
+    kl_div = np.sum(np.where(mask, vec1 * log_vals - vec1 + vec2, 0))
     return kl_div
