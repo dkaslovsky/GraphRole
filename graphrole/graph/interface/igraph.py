@@ -155,7 +155,5 @@ class IgraphInterface(BaseGraphInterface):
             return v1 in interior and v2 in exterior
 
         return (
-            (v1 in interior and v2 in exterior)
-            or
-            (v1 in exterior and v2 in interior)
+            (v1 in interior and v2 in exterior) or (v1 in exterior and v2 in interior)
         )

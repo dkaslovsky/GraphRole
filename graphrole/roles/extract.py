@@ -91,7 +91,7 @@ class RoleExtractor:
             index=role_labels,
             columns=features.columns
         )
-    
+
     def explain(self):
         raise NotImplementedError('Role explanation (\"sense making\") is not yet implemented.')
 
