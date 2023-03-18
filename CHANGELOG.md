@@ -1,3 +1,7 @@
+## 1.0.3 / 2023-03-18
+
+* [Changed] added Python 3.10 and Python 3.11 support and updated necessary dependencies
+
 ## 1.0.2 / 2021-06-26
 
 * [Fixed] eliminated runtime warning when computing log of array containing zeros
