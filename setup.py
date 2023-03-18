@@ -10,7 +10,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='graphrole',
-    version='1.0.2',
+    version='1.0.3',
     author='Daniel Kaslovsky',
     author_email='dkaslovsky@gmail.com',
     license='MIT',
@@ -33,5 +33,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ]
 )
