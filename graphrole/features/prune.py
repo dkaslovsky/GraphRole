@@ -21,7 +21,7 @@ def vertical_log_binning(arr: VectorLike, frac: float = 0.5) -> VectorLike:
         raise ValueError('must specify frac in interval (0, 1)')
 
     arr_len = len(arr)
-    binned = np.zeros(arr_len, dtype=np.int)
+    binned = np.zeros(arr_len, dtype=int)
 
     # get sorted unique values and counts in arr
     arr_uniq, counts = np.unique(arr, return_counts=True)
