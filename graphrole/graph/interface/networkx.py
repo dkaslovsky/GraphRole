@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Iterable
 
 import networkx as nx
@@ -40,20 +41,27 @@ class NetworkxInterface(BaseGraphInterface):
         """
         Return local features for each node in the graph
         """
+
+        attribute_features = pd.DataFrame({
+            attr_name: {node: attr_val}
+            for node in self.G.nodes()
+            for attr_name, attr_val in self.G.nodes[node].items() if isinstance(attr_val, Number)
+        })
+        
         if self.directed:
-            return pd.DataFrame(
-                {
-                    'in_degree': dict(self.G.in_degree(weight='weight')),
-                    'out_degree': dict(self.G.out_degree(weight='weight')),
-                    'total_degree': dict(self.G.degree(weight='weight')),
-                }
+            features = pd.DataFrame({
+                'in_degree': dict(self.G.in_degree(weight='weight')),
+                'out_degree': dict(self.G.out_degree(weight='weight')),
+                'total_degree': dict(self.G.degree(weight='weight')),
+            })
+        else:
+            features = pd.DataFrame.from_dict(
+                dict(self.G.degree(weight='weight')),
+                orient='index',
+                columns=['degree'],
             )
 
-        return pd.DataFrame.from_dict(
-            dict(self.G.degree(weight='weight')),
-            orient='index',
-            columns=['degree']
-        )
+        return pd.concat([features, attribute_features], axis = 1).fillna(0)
 
     def _get_egonet_features(self) -> pd.DataFrame:
         """
