@@ -23,6 +23,14 @@ class BaseGraphInterface(ABC):
         return features
 
     def _set_attribute_kwargs(self, **kwargs) -> None:
+        """
+        Parses kwargs to set attribute parameters
+        :kwarg attributes: boolean indicating whether to use node attributes as features
+        :kwarg attributes_include: include list of node attributes for features
+          (all attributes are used if not specified)
+        :kwarg attributes_exclude: exclude list of node attributes for features
+          (overrides attributes_include in cases of conflict)
+        """
         self._attrs: bool = kwargs.get('attributes', False)
         self._attrs_include: List[str] = kwargs.get('attributes_include', [])
         self._attrs_exclude: List[str] = kwargs.get('attributes_exclude', [])
