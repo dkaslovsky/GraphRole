@@ -82,6 +82,8 @@ class NetworkxInterface(BaseGraphInterface):
             }
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
+    ### helpers ###
+
     def _get_attribute_features(self) -> pd.DataFrame:
         """
         Return attribute features for each node in the graph
@@ -109,8 +111,6 @@ class NetworkxInterface(BaseGraphInterface):
                     continue
                 attrs[attr_name][node_idx] = attr_val
         return pd.DataFrame(attrs).fillna(0)
-
-    ### helpers ###
 
     def _get_edge_sum(self, edges: Iterable[Edge]) -> float:
         """
