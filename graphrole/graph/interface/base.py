@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable
+from typing import Iterable, List
 
 import pandas as pd
 
@@ -21,6 +21,11 @@ class BaseGraphInterface(ABC):
         features = (pd.concat([local, ego], axis=1, sort=True)
                     .sort_index())
         return features
+
+    def _set_attribute_kwargs(self, **kwargs) -> None:
+        self._attrs: bool = kwargs.get('attributes', False)
+        self._attrs_include: List[str] = kwargs.get('attributes_include', [])
+        self._attrs_exclude: List[str] = kwargs.get('attributes_exclude', [])
 
     @abstractmethod
     def get_num_edges(self) -> int:
