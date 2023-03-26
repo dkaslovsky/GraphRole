@@ -6,14 +6,12 @@ import pandas as pd
 
 from graphrole.graph import interface
 
-# temporarily skip igraph tests during development
-skip_igraph_tests = True
-# # try to import igraph; if not found set flag to skip associated tests
-# skip_igraph_tests = False
-# try:
-#     import igraph as ig
-# except ImportError:
-#     skip_igraph_tests = True
+# try to import igraph; if not found set flag to skip associated tests
+skip_igraph_tests = False
+try:
+    import igraph as ig
+except ImportError:
+    skip_igraph_tests = True
 
 
 def assertion_error_with_test_case(err: AssertionError, test_case: str) -> AssertionError:
