@@ -106,7 +106,7 @@ class IgraphInterface(BaseGraphInterface):
 
         if self._attrs_include:
             attrs = {
-                attr_name: {
+                self._attribute_feature_name(attr_name): {
                     node.index: attr_val
                     for node in self.G.vs()
                     if isinstance(attr_val := node.attributes().get(attr_name, 0), Number)
@@ -123,7 +123,7 @@ class IgraphInterface(BaseGraphInterface):
                     continue
                 if not isinstance(attr_val, Number):
                     continue
-                attrs[attr_name][node.index] = attr_val
+                attrs[self._attribute_feature_name(attr_name)][node.index] = attr_val
         return pd.DataFrame(attrs).fillna(0)
 
     def _get_degree_dict(self, mode: Optional[str] = None) -> Dict[Node, int]:

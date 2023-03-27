@@ -12,6 +12,9 @@ class BaseGraphInterface(ABC):
     Abstract class to define the interface used to interact with various graph libraries
     """
 
+    # prefix appended to attribute names to form the resulting feature name
+    attribute_feature_prefix = 'attribute'
+
     def get_neighborhood_features(self) -> pd.DataFrame:
         """
         Return neighborhood features (local + egonet) for each node in the graph
@@ -34,6 +37,14 @@ class BaseGraphInterface(ABC):
         self._attrs: bool = kwargs.get('attributes', False)
         self._attrs_include: List[str] = kwargs.get('attributes_include', [])
         self._attrs_exclude: List[str] = kwargs.get('attributes_exclude', [])
+
+    @classmethod
+    def _attribute_feature_name(cls, attr_name: str) -> str:
+        """
+        Forms a name used for attribute features by appending attribute_prefix to the attribute's
+        name, avoiding any potential collision with predefined features
+        """
+        return f'{cls.attribute_feature_prefix}_{attr_name}'
 
     @abstractmethod
     def get_num_edges(self) -> int:

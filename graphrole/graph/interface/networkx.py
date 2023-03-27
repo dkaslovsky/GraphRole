@@ -92,7 +92,7 @@ class NetworkxInterface(BaseGraphInterface):
 
         if self._attrs_include:
             attrs = {
-                attr_name: {
+                self._attribute_feature_name(attr_name): {
                     node_idx: attr_val
                     for node_idx, attrs in self.G.nodes(data=True)
                     if isinstance(attr_val := attrs.get(attr_name, 0), Number)
@@ -109,7 +109,7 @@ class NetworkxInterface(BaseGraphInterface):
                     continue
                 if not isinstance(attr_val, Number):
                     continue
-                attrs[attr_name][node_idx] = attr_val
+                attrs[self._attribute_feature_name(attr_name)][node_idx] = attr_val
         return pd.DataFrame(attrs).fillna(0)
 
     def _get_edge_sum(self, edges: Iterable[Edge]) -> float:
