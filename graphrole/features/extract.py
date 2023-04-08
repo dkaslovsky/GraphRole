@@ -23,18 +23,22 @@ class RecursiveFeatureExtractor:
         self,
         G: interface.GraphLibInstance,
         max_generations: int = 10,
-        aggs: Optional[List] = None
+        aggs: Optional[List] = None,
+        **kwargs
     ) -> None:
         """
         :param G: graph object from supported graph package
         :param max_generations: maximum levels of recursion
         :param aggs: optional list of aggregations for each recursive generation
+        :kwargs: kwargs accepted by the relevant graph interface
         """
 
-        graph = interface.get_interface(G)
-        if graph is None:
+        graph_class = interface.get_interface(G)
+        if graph_class is None:
             raise TypeError(f'Input graph G must be from one of the following '
                             f'supported libraries: {self.supported_graph_libs}')
+        
+        graph = graph_class(G, **kwargs)
         if graph.get_num_edges() == 0:
             raise ValueError('Input graph G must contain at least one edge')
 

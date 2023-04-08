@@ -13,7 +13,7 @@ INTERFACES = {
     'networkx': NetworkxInterface,
     # lazy eval in case IgraphInterface was not imported
     # pylint: disable=unnecessary-lambda
-    'igraph': lambda x: IgraphInterface(x),
+    'igraph': lambda G, **kwargs: IgraphInterface(G, **kwargs),
 }
 
 
@@ -50,4 +50,4 @@ def get_interface(G: GraphLibInstance) -> GraphInterfaceType:
         graph_interface = INTERFACES[package]
     except KeyError:
         return None
-    return graph_interface(G)
+    return graph_interface
