@@ -43,6 +43,7 @@ class BaseGraphInterface(ABC):
         """
         Forms a name used for attribute features by appending attribute_prefix to the attribute's
         name, avoiding any potential collision with predefined features
+        :param attr_name: attribute name to prepend with prefix
         """
         return f'{cls.attribute_feature_prefix}_{attr_name}'
 
