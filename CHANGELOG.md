@@ -1,3 +1,7 @@
+## 1.1.0 / 2023-04-08
+
+* [Added] optionally include node attributes as local features
+
 ## 1.0.3 / 2023-03-18
 
 * [Changed] added Python 3.10 and Python 3.11 support and updated necessary dependencies
