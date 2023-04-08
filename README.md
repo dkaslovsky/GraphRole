@@ -66,14 +66,14 @@ can be retrieved as a `pandas.DataFrame`:
 >>> role_extractor.role_percentage
 ```
 
-### Node Attributes as Arbitrary Features
-`GraphRole` uses predefined structural graph properties for constructing features. It is also possible, as of version 1.1.0, to optionally include numeric node attributes as features. Providing a graph annotated with node attributes to `GraphRole` allows a user to seed the recursive feature extraction process with arbitrary and user-defined features for each node.
+### Node Attributes as User-Defined Features
+`GraphRole` uses predefined structural graph properties for constructing features. It is also possible, as of version 1.1.0, to optionally include numeric node attributes as features. Providing a graph annotated with node attributes to `GraphRole` allows a user to seed the recursive feature extraction process with user-defined features for each node.
 
 Node attributes are enabled by passing `attributes=True` as a kwarg to the `RecursiveFeatureExtractor`:
 ```python
 >>> feature_extractor = RecursiveFeatureExtractor(G, attributes=True)
 ```
-Providing this kwarg will automatically include all numeric node attributes as features which will be included in the recursive feature calculation. Attributes with non-numeric values are always skipped (set to zero). Note that the feature names for such node attributes will be the attribute name prepended with a `attribute_` prefix.
+Providing this kwarg will automatically include all numeric node attributes as features to be included in the recursive feature calculations. Attributes with non-numeric values are always skipped (set to zero). Note that the feature names associated with node attributes will be the provided attribute name prepended with a prefix of `attribute_`.
 
 A list of attributes to be included for feature calculation instead of defaulting to all numeric attributes can be provided as:
 ```python
@@ -89,7 +89,7 @@ which will specify the use of all node attributes other than `attr2`.
 
 For safety, the `attributes_exclude` list takes priority over the `attributes_include` list when conflicting specifications are provided.
 
-Note: `igraph` uses the attribute `name` to store an identifier for all nodes and as such its value is never used for feature calculation. The attribute `name`, even if overwritten by the user, is always skipped for `igraph` graph instances.
+Note: `igraph` uses the attribute `name` to store an identifier for all nodes and therefore the corresponding attribute value is never used for feature calculations. The attribute `name`, even if overwritten by the user, is always skipped for `igraph` graph instances.
 
 ### Graph Interfaces
 An interface for graph data structures is provided in the `graphrole.graph.interface` module.  Implementations for `networkx` and `igraph` are included.
