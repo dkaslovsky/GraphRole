@@ -28,7 +28,8 @@ class TestGetInterface(unittest.TestCase):
         # test with object from supported library
         obj = nx.Graph()
         graph_interface = interface.get_interface(obj)
-        self.assertIsInstance(graph_interface, interface.BaseGraphInterface)
+        graph = graph_interface(obj)
+        self.assertIsInstance(graph, interface.BaseGraphInterface)
         # test with object not from supported library
         obj = str
         graph_interface = interface.get_interface(obj)
