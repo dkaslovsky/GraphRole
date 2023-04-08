@@ -1,4 +1,6 @@
+from collections import defaultdict
 from functools import partial
+from numbers import Number
 from operator import itemgetter
 from typing import Dict, Iterable, List, Optional, Set
 
@@ -9,13 +11,23 @@ from graphrole.graph.interface import BaseGraphInterface
 from graphrole.types import Edge, Node
 
 
+IGRAPH_RESERVED_ATTRIBUTE_NAMES = {
+    'name', # igraph stores the name of the node as a default attribute
+}
+
+
 class IgraphInterface(BaseGraphInterface):
 
     """ Interface for igraph Graph object """
 
-    def __init__(self, G: ig.Graph) -> None:
+    def __init__(self, G: ig.Graph, **kwargs) -> None:
         """
         :param G: igraph Graph
+        :kwarg attributes: boolean indicating whether to use node attributes as features
+        :kwarg attributes_include: include list of node attributes for features
+          (all attributes are used if not specified)
+        :kwarg attributes_exclude: exclude list of node attributes for features
+          (overrides attributes_include in cases of conflict)
         """
         self.G = G
         self.directed = G.is_directed()
@@ -25,6 +37,8 @@ class IgraphInterface(BaseGraphInterface):
             edge.tuple: edge.attributes().get('weight', 1)
             for edge in self.G.es()
         }
+
+        self._set_attribute_kwargs(**kwargs)
 
     def get_num_edges(self) -> int:
         """
@@ -49,19 +63,23 @@ class IgraphInterface(BaseGraphInterface):
         Return local features for each node in the graph
         """
         if self.directed:
-            return pd.DataFrame(
-                {
-                    'in_degree': self._get_degree_dict(mode='in'),
-                    'out_degree': self._get_degree_dict(mode='out'),
-                    'total_degree': self._get_degree_dict(),
-                }
+            features = pd.DataFrame({
+                'in_degree': self._get_degree_dict(mode='in'),
+                'out_degree': self._get_degree_dict(mode='out'),
+                'total_degree': self._get_degree_dict(),
+            })
+        else:
+            features = pd.DataFrame.from_dict(
+                self._get_degree_dict(),
+                orient='index',
+                columns=['degree']
             )
+        
+        if self._attrs:
+            attribute_features = self._get_attribute_features()
+            features = pd.concat([features, attribute_features], axis=1)
 
-        return pd.DataFrame.from_dict(
-            self._get_degree_dict(),
-            orient='index',
-            columns=['degree']
-        )
+        return features.fillna(0)
 
     def _get_egonet_features(self) -> pd.DataFrame:
         """
@@ -79,6 +97,34 @@ class IgraphInterface(BaseGraphInterface):
         return pd.DataFrame.from_dict(egonet_features, orient='index')
 
     ### helpers ###
+
+    def _get_attribute_features(self) -> pd.DataFrame:
+        """
+        Return attribute features for each node in the graph
+        """
+        exclude = {item for item in self._attrs_exclude}
+
+        if self._attrs_include:
+            attrs = {
+                self._attribute_feature_name(attr_name): {
+                    node.index: attr_val
+                    for node in self.G.vs()
+                    if isinstance(attr_val := node.attributes().get(attr_name, 0), Number)
+                }
+                for attr_name in self._attrs_include
+                if attr_name not in exclude and attr_name not in IGRAPH_RESERVED_ATTRIBUTE_NAMES
+            }
+            return pd.DataFrame(attrs).fillna(0)
+
+        attrs = defaultdict(dict)
+        for node in self.G.vs():
+            for attr_name, attr_val in node.attributes().items():
+                if attr_name in exclude or attr_name in IGRAPH_RESERVED_ATTRIBUTE_NAMES:
+                    continue
+                if not isinstance(attr_val, Number):
+                    continue
+                attrs[self._attribute_feature_name(attr_name)][node.index] = attr_val
+        return pd.DataFrame(attrs).fillna(0)
 
     def _get_degree_dict(self, mode: Optional[str] = None) -> Dict[Node, int]:
         """

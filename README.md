@@ -41,30 +41,55 @@ Although not reflected by this example, weighted and directed graphs are also su
 
 ### Usage
 For general usage, begin by importing the two feature and role extraction classes:
-```
+```python
 >>> from graphrole import RecursiveFeatureExtractor, RoleExtractor
 ```
 Features are then extracted from a graph `G` into a `pandas.DataFrame`:
-```
+```python
 >>> feature_extractor = RecursiveFeatureExtractor(G)
 >>> features = feature_extractor.extract_features()
 ```
 Next, these features are used to learn roles.  The number of roles is automatically determined by
 a model selection procedure when `n_roles=None` is passed to the `RoleExtractor` class instance.
 Alternatively, `n_roles` can be set to a desired number of roles to be extracted.
-```
+```python
 >>> role_extractor = RoleExtractor(n_roles=None)
 >>> role_extractor.extract_role_factors(features)
 ```
 The role assignment for each node can be retrieved as a dictionary:
-```
+```python
 >>> role_extractor.roles
 ```
 Alternatively, roles can be viewed as a soft assignment and a node's percent membership to each role
 can be retrieved as a `pandas.DataFrame`:
-```
+```python
 >>> role_extractor.role_percentage
 ```
+
+### Node Attributes as User-Defined Features
+`GraphRole` uses predefined structural graph properties for constructing features. It is also possible, as of version 1.1.0, to optionally include numeric node attributes as features. Providing a graph annotated with node attributes to `GraphRole` allows a user to seed the recursive feature extraction process with user-defined features for each node.
+
+Node attributes are enabled by passing `attributes=True` as a kwarg to the `RecursiveFeatureExtractor`:
+```python
+>>> feature_extractor = RecursiveFeatureExtractor(G, attributes=True)
+```
+Providing this kwarg will automatically include all numeric node attributes as features to be included in the recursive feature calculations. Attributes with non-numeric values are always skipped (set to zero). Note that the feature names associated with node attributes will be the provided attribute name prepended with a prefix of `attribute_`.
+
+A list of attributes to be included for feature calculation instead of defaulting to all numeric attributes can be provided as:
+```python
+>>> feature_extractor = RecursiveFeatureExtractor(G, attributes=True, attributes_include=['attr1', 'attr3'])
+```
+which will specify the use of only node attributes `attr1` and `attr3`.
+
+A list of attributes to be excluded for feature calculation from the default of all numeric attributes can be provided as:
+```python
+>>> feature_extractor = RecursiveFeatureExtractor(G, attributes=True, attributes_exclude=['attr2'])
+```
+which will specify the use of all node attributes other than `attr2`.
+
+For safety, the `attributes_exclude` list takes priority over the `attributes_include` list when conflicting specifications are provided.
+
+Note: `igraph` uses the attribute `name` to store an identifier for all nodes and therefore the corresponding attribute value is never used for feature calculations. The attribute `name`, even if overwritten by the user, is always skipped for `igraph` graph instances.
 
 ### Graph Interfaces
 An interface for graph data structures is provided in the `graphrole.graph.interface` module.  Implementations for `networkx` and `igraph` are included.
