@@ -1,3 +1,7 @@
+## 1.1.1 / 2023-10-08
+
+* [Changed] updated dependency version requirements
+
 ## 1.1.0 / 2023-04-08
 
 * [Added] optionally include node attributes as local features
