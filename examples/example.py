@@ -5,15 +5,30 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
 
+# from examples.graph import load_example_graph
+from data import load_nx_karate_club_graph
 from graphrole import RecursiveFeatureExtractor, RoleExtractor
-
 
 # pylint: disable=invalid-name
 
 if __name__ == '__main__':
 
+    # This example script demonstrates GraphRole's main functionality. It matches the examples.ipynb notebook.
+    #
+    # Notes:
+    # - The example workflow was built prior to GraphRole's ability to use edge weights in its feature calculations.
+    #   To keep consistent results, the example graph is loaded without edge weights. To include edge weights
+    #   when loading the graph, change the weighted kwarg to True. GraphRole will automatically include
+    #   these weights in its feature calculations and results will therefore differ from below.
+    #
+    # - The role calculations are slightly sensitive to the versions of scipy and scikit-learn used
+    #   for matrix factorization (NMF) and clustering (K-Means). The results below are obtained using
+    #   scipy==1.10.1 and scikit-learn==1.2.2, matching the original implementation of GraphRole. More
+    #   granular insight into previous version requirements can be found in the git history of
+    #   GraphRole's requirements.txt file.
+
     # load the well known karate_club_graph from Networkx
-    G = nx.karate_club_graph()
+    G = load_nx_karate_club_graph(weighted=False)
 
     # extract features
     feature_extractor = RecursiveFeatureExtractor(G)
