@@ -1,0 +1,5 @@
+include *.md
+include *.txt
+recursive-include examples *.ipynb
+recursive-include examples *.png
+recursive-include examples *.py
