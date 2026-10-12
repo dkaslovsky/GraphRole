@@ -61,8 +61,11 @@ class TestRecursiveFeatureExtractorWithDanglingNode(unittest.TestCase):
         # get next features
         self.rfe.generation_count = 1
         next_features1 = self.rfe._get_next_features()
-        # test that dangling nodes did not generate features
-        self.assertListEqual(next_features1.index.tolist(), list(self.edge))
+        # test that dangling nodes did not generate nonzero features (depending on the
+        # pandas version they are either absent or all-zero; _update fills absent with 0)
+        dangling = [node for node in self.nodes if node not in self.edge]
+        self.assertTrue((next_features1.reindex(dangling).fillna(0) == 0).all().all())
+        self.assertTrue(set(self.edge) <= set(next_features1.index))
         # test that features are not null/nan
         self.assertTrue(all(next_features1.notnull()))
 

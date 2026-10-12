@@ -14,9 +14,11 @@ class RecursiveFeatureExtractor:
 
     supported_graph_libs = interface.get_supported_graph_libraries()
 
+    # aggregations are given by name: passing unbound pd.DataFrame methods
+    # raises a TypeError in DataFrame.agg on pandas >= 2
     default_aggs = [
-        pd.DataFrame.sum,
-        pd.DataFrame.mean,
+        'sum',
+        'mean',
     ]
 
     def __init__(
